@@ -1,25 +1,24 @@
 package pers.perry.xu.crawler.framework.webcrawler.worker;
 
-import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import pers.perry.xu.crawler.framework.webcrawler.controller.CrawlerController;
+import pers.perry.xu.crawler.framework.webcrawler.configuration.CrawlerConfiguration;
+import pers.perry.xu.crawler.framework.webcrawler.log.CrawlerLog;
 import pers.perry.xu.crawler.framework.webcrawler.utils.Utils;
 
 public class CrawlerWorkerEngine {
 
-	private CrawlerController crawlerController = null;;
-
-	private Path outputPath = null;
-
 	private ExecutorService threadPool;
 
-	private int threadCreateInterval = 500;
+	private CrawlerConfiguration configuration;
 
-	public CrawlerWorkerEngine(CrawlerController crawlerController, Path outputPath) {
-		this.crawlerController = crawlerController;
-		this.outputPath = outputPath;
+	private CrawlerLog crawlerLogging;
+
+	public CrawlerWorkerEngine(CrawlerConfiguration configuration) {
+		this.configuration = configuration;
+
+		this.crawlerLogging = new CrawlerLog();
 	}
 
 	/**
@@ -28,11 +27,6 @@ public class CrawlerWorkerEngine {
 	 * @param n thread number
 	 */
 	public void startWorkers(int n) {
-		if (crawlerController == null || outputPath == null) {
-			Utils.print("ERROR: Need to input non-null crawlerController and outputPath.");
-			return;
-		}
-
 		if (n < 1) {
 			n = 1;
 		} else if (n > 10) {
@@ -43,10 +37,10 @@ public class CrawlerWorkerEngine {
 		threadPool = Executors.newFixedThreadPool(n);
 		try {
 			for (int i = 0; i < n; i++) {
-				CrawlerWorker thread = new CrawlerWorker(i + 1, crawlerController);
+				CrawlerWorker thread = new CrawlerWorker(i + 1, configuration.getParser(), crawlerLogging);
 				threadPool.execute(thread);
 
-				Thread.sleep(threadCreateInterval);
+				Thread.sleep(configuration.getThreadCreateSleepTimeMS());
 
 			}
 		} catch (InterruptedException e) {

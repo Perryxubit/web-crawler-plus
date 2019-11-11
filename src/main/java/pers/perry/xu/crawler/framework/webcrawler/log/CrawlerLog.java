@@ -1,20 +1,22 @@
 package pers.perry.xu.crawler.framework.webcrawler.log;
 
-import java.nio.file.Path;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class CrawlerLog {
 
-	private Path logPath = null;
+//	private Set<String> historySet = null;
+	private ConcurrentSkipListSet<String> historySet;
 
-	CrawlerLog(Path filePath) {
-
-		System.out.println("");
+	public CrawlerLog() {
+		historySet = new ConcurrentSkipListSet<String>();
+//		historySet = Collections.synchronizedSet(new HashSet<String>());
 	}
 
-	public void saveLog() {
-
+	public boolean isInHistory(String url) {
+		return historySet.contains(url);
 	}
 
-	// public void load
-
+	public void addToHistory(String url) {
+		this.historySet.add(url);
+	}
 }
