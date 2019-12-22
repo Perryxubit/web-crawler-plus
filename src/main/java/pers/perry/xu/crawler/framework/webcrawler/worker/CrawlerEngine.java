@@ -7,7 +7,7 @@ import pers.perry.xu.crawler.framework.webcrawler.configuration.CrawlerConfigura
 import pers.perry.xu.crawler.framework.webcrawler.log.CrawlerLog;
 import pers.perry.xu.crawler.framework.webcrawler.utils.Utils;
 
-public class CrawlerWorkerEngine {
+public class CrawlerEngine {
 
 	private ExecutorService threadPool;
 
@@ -15,10 +15,15 @@ public class CrawlerWorkerEngine {
 
 	private CrawlerLog crawlerLogging;
 
-	public CrawlerWorkerEngine(CrawlerConfiguration configuration) {
+	public CrawlerEngine(CrawlerConfiguration configuration) {
 		this.configuration = configuration;
 
 		this.crawlerLogging = new CrawlerLog();
+	}
+
+	public enum WorkerType {
+		SeedWorker, // only working on adding new seeds
+		ResourceWorker // only working on resource spider
 	}
 
 	/**
@@ -27,9 +32,9 @@ public class CrawlerWorkerEngine {
 	 * @param n thread number
 	 */
 	public void startWorkers(int n) {
-		if (n < 1) {
+		if (n <= 1) {
 			n = 1;
-		} else if (n > 10) {
+		} else if (n >= 10) {
 			n = 10;
 		}
 
@@ -41,7 +46,6 @@ public class CrawlerWorkerEngine {
 				threadPool.execute(thread);
 
 				Thread.sleep(configuration.getThreadCreateSleepTimeMS());
-
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();

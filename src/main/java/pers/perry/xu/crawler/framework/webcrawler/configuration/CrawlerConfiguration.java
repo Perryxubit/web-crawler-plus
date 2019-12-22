@@ -3,7 +3,7 @@ package pers.perry.xu.crawler.framework.webcrawler.configuration;
 import java.io.File;
 import java.util.ArrayList;
 
-import pers.perry.xu.crawler.framework.webcrawler.parser.PageParser;
+import pers.perry.xu.crawler.framework.webcrawler.parser.WebPageParser;
 
 public class CrawlerConfiguration {
 
@@ -29,13 +29,13 @@ public class CrawlerConfiguration {
 		seedList = new ArrayList<String>();
 	}
 
-	private PageParser parser;
+	private WebPageParser parser;
 
-	public void setParser(PageParser parser) {
+	public void setParser(WebPageParser parser) {
 		this.parser = parser;
 	}
 
-	public PageParser getParser() {
+	public WebPageParser getParser() {
 		return parser;
 	}
 
@@ -89,5 +89,4 @@ public class CrawlerConfiguration {
 	public void setSeedList(ArrayList<String> seedList) {
 		this.seedList = seedList;
 	}
-
 }

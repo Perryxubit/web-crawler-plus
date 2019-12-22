@@ -2,6 +2,8 @@ package pers.perry.xu.crawler.framework.webcrawler.utils;
 
 public class Utils {
 
+	public static boolean debug = false;
+
 	public static void print(Object... out) {
 		if (out.length == 0) {
 			return;

@@ -13,27 +13,39 @@ import pers.perry.xu.crawler.framework.webcrawler.utils.Utils;
 public class MessageBroker {
 	// default message queue length = 100;
 	private final static int QUEUE_LENGTH = 100;
+//	private final static int QUEUE_FULL_WAIT = 5000;
 
 	private static ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<String>(QUEUE_LENGTH);
 
-	public static void addMessage(String message) {
+	public static boolean addMessage(String message) {
 		// blocking the calling thread if queue is full.
 		try {
+			if (queue.size() + 1 >= QUEUE_LENGTH) {
+				return false; // add failed
+			}
 			queue.put(message);
-			Utils.print("Message [{}] added into queue", message);
+			Utils.print("Message [{}] added into queue, queue size {}", message, queue.size());
+			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		return true;
 	}
 
-	public static void addMessage(String message, int threadNr) {
+	public static boolean addMessage(String message, int threadNr) {
 		// blocking the calling thread if queue is full.
 		try {
+			if (queue.size() + 1 >= QUEUE_LENGTH) {
+				return false; // add failed
+			}
 			queue.put(message);
-			Utils.print("Worker thread {}: Message [{}] added into queue", threadNr, message);
+			Utils.print("Worker thread {}: Message [{}] added into queue, queue size {}", threadNr, message,
+					queue.size());
+			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		return true;
 	}
 
 	public static String getMessage() {
@@ -41,7 +53,10 @@ public class MessageBroker {
 		String message = null;
 		try {
 			message = queue.take();
-			Utils.print("Message [{}] is consumed from the queue", message);
+			if (Utils.debug) {
+				Utils.print("Message [{}] is consumed from the queue, queue size: {}", message, queue.size());
+			}
+			Thread.sleep(10);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -53,7 +68,11 @@ public class MessageBroker {
 		String message = null;
 		try {
 			message = queue.take();
-			Utils.print("Worker thread {}: Message [{}] is consumed from the queue", threadNr, message);
+			if (Utils.debug) {
+				Utils.print("Worker thread {}: Message [{}] is consumed from the queue, queue size: {}", threadNr,
+						message, queue.size());
+			}
+			Thread.sleep(10);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

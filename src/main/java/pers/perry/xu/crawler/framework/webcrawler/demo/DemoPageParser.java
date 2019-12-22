@@ -1,26 +1,51 @@
 package pers.perry.xu.crawler.framework.webcrawler.demo;
 
-import pers.perry.xu.crawler.framework.webcrawler.parser.PageParser;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class DemoPageParser implements PageParser {
+import org.jsoup.nodes.Element;
 
-	public String visitUrlPattern() {
-		return "http://www.mmonly.cc/mmtp/xgmn/[0-9]+.html";
+import pers.perry.xu.crawler.framework.webcrawler.parser.WebPageParser;
+
+public class DemoPageParser implements WebPageParser {
+
+	public List<String> getSeedUrlsList(Element bodyElement) {
+		List<String> list = new ArrayList<String>();
+		list.add("http://www.mmonly.cc/mmtp/xgmn/[0-9]+.html");
+		return getMatchingList(list, bodyElement.toString());
 	}
 
-	public String visitPicturePattern() {
-//		http://www.mmonly.cc/mmtp/xgmn/
-		return "http://www.mmonly.cc/mmtp/xgmn/[0-9]+.html";
+	public String visitText(Element bodyElement) {
+		// 匹配exp前面的位置 (?=exp)
+		// 匹配exp后面的位置 (?<=exp)
+		return "(?<=<img alt=\")[\\u4e00-\\u9fa5]+(?=\"\\s+src)";
 	}
 
-	public String visitTextPattern() {
-//		return "<a[^>]*>([^<]*)</a>";
-		return "http://www.mmonly.cc/mmtp/xgmn/[0-9]+.html";
+	public List<String> getPicturesUrlsList(Element bodyElement) {
+		List<String> targetList = new ArrayList<String>();
+		String pattern = "src=\"(.+?\\.jpg)\"";
+		Pattern webPattern = Pattern.compile(pattern);
+		Matcher webMatcher = webPattern.matcher(bodyElement.toString());
+		while (webMatcher.find()) {
+			String res = webMatcher.group();
+			res = res.replace("src=", "").replace("\"", "");
+			targetList.add(res);
+		}
+		return targetList;
 	}
 
-	public String subUrlSeedPattern() {
-		// TODO Auto-generated method stub
-		return null;
+	private List<String> getMatchingList(List<String> patterns, String html) {
+		List<String> targetList = new ArrayList<String>();
+		for (String pattern : patterns) {
+			// get matching url for each pattern, and add into queue
+			Pattern webPattern = Pattern.compile(pattern);
+			Matcher webMatcher = webPattern.matcher(html);
+			while (webMatcher.find()) {
+				targetList.add(webMatcher.group());
+			}
+		}
+		return targetList;
 	}
-
 }
