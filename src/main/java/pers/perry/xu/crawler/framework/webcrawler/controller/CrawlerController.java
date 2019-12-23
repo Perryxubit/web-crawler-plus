@@ -30,10 +30,9 @@ public class CrawlerController {
 	public void startCrawler() {
 		if (controllerStatus == CrawlerStatus.Normal) {
 			CrawlerEngine engine = new CrawlerEngine(configuration);
-			engine.startWorkers(configuration.getMaxThreadNumber());
+			engine.startWorkers();
 
 			List<String> seedList = configuration.getSeedList();
-
 			for (String seed : seedList) {
 				try {
 					MessageBroker.addMessage(seed);

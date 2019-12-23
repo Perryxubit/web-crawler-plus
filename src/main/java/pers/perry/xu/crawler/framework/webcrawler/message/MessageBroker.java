@@ -14,6 +14,8 @@ public class MessageBroker {
 	// default message queue length = 100;
 	private final static int QUEUE_LENGTH = 100;
 //	private final static int QUEUE_FULL_WAIT = 5000;
+	private final static int MESSAGE_PUSH_WAIT = 200;
+	private final static int MESSAGE_POP_WAIT = 10;
 
 	private static ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<String>(QUEUE_LENGTH);
 
@@ -25,7 +27,7 @@ public class MessageBroker {
 			}
 			queue.put(message);
 			Utils.print("Message [{}] added into queue, queue size {}", message, queue.size());
-			Thread.sleep(100);
+			Thread.sleep(MESSAGE_PUSH_WAIT);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -41,7 +43,7 @@ public class MessageBroker {
 			queue.put(message);
 			Utils.print("Worker thread {}: Message [{}] added into queue, queue size {}", threadNr, message,
 					queue.size());
-			Thread.sleep(100);
+			Thread.sleep(MESSAGE_PUSH_WAIT);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -53,10 +55,8 @@ public class MessageBroker {
 		String message = null;
 		try {
 			message = queue.take();
-			if (Utils.debug) {
-				Utils.print("Message [{}] is consumed from the queue, queue size: {}", message, queue.size());
-			}
-			Thread.sleep(10);
+			Utils.print("Message [{}] is consumed from the queue, queue size: {}", message, queue.size());
+			Thread.sleep(MESSAGE_POP_WAIT);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -68,11 +68,9 @@ public class MessageBroker {
 		String message = null;
 		try {
 			message = queue.take();
-			if (Utils.debug) {
-				Utils.print("Worker thread {}: Message [{}] is consumed from the queue, queue size: {}", threadNr,
-						message, queue.size());
-			}
-			Thread.sleep(10);
+			Utils.print("Worker thread {}: Message [{}] is consumed from the queue, queue size: {}", threadNr, message,
+					queue.size());
+			Thread.sleep(MESSAGE_POP_WAIT);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

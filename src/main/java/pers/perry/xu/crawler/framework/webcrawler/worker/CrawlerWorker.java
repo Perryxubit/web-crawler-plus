@@ -16,15 +16,17 @@ public class CrawlerWorker implements Runnable {
 	private int threadIndex;
 	private WebPageParser pageParser;
 	private CrawlerLog crawlerLogging;
+	private WorkerType workerType;
 
 	private static int QUEUE_FULL_WAIT = 5000;
 
-	CrawlerWorker(int index, WebPageParser pageParser, CrawlerLog crawlerLogging) {
+	CrawlerWorker(int index, WorkerType type, WebPageParser pageParser, CrawlerLog crawlerLogging) {
 		this.threadIndex = index;
+		this.workerType = type;
 		this.pageParser = pageParser;
 		this.crawlerLogging = crawlerLogging;
 
-		Utils.print("Worker thread {} is created and running...", threadIndex);
+		Utils.print("Worker thread {} ({}) is created and running...", threadIndex, type);
 	}
 
 	public void run() {
@@ -62,28 +64,30 @@ public class CrawlerWorker implements Runnable {
 	}
 
 	private void parseWebPage(WebPage page) {
-		// 1. check if we have url contained in the current page which needs to be added
-		// in to MQ. -> if yes, add to the MQ
-		List<String> urlList = pageParser.getSeedUrlsList(page.getWebBody());
-		if (urlList == null || urlList.size() == 0) {
-			return;
-		}
-		for (String url : urlList) {
-			if (!crawlerLogging.isInHistory(url)) { // only add new url
-				Utils.print("Worker thread {}: sub url seed added {}", threadIndex, url);
-				addToMQOrWait(url);
-				crawlerLogging.addToHistory(url);
+		if (workerType == WorkerType.SeedWorker) {
+			// check if we have url contained in the current page which needs to be added
+			// in to MQ. -> if yes, add to the MQ
+			List<String> urlList = pageParser.getSeedUrlsList(page.getWebBody());
+			if (urlList == null || urlList.size() == 0) {
+				return;
 			}
-		}
+			for (String url : urlList) {
+				if (!crawlerLogging.isInHistory(url)) { // only add new url
+					Utils.print("Worker thread {}: sub url seed added {}", threadIndex, url);
+					addToMQOrWait(url);
+					crawlerLogging.addToHistory(url);
+				}
+			}
+		} else if (workerType == WorkerType.ResourceWorker) {
+			// check if we have pageParser.visitTextPattern()
+			// TODO:
 
-		// 2. check if we have pageParser.visitTextPattern()
-		// TODO:
-
-		// 3. check if we have pageParser.visitPicturePattern()
-		List<String> picList = pageParser.getPicturesUrlsList(page.getWebBody());
-		if (picList != null && picList.size() > 0) {
-			for (String pic : picList) {
-				Utils.print("### Worker thread {}: pic - {}", threadIndex, pic);
+			// check if we have pageParser.visitPicturePattern()
+			List<String> picList = pageParser.getPicturesUrlsList(page.getWebBody());
+			if (picList != null && picList.size() > 0) {
+				for (String pic : picList) {
+					Utils.print("### Worker thread {}: pic - {}", threadIndex, pic);
+				}
 			}
 		}
 	}

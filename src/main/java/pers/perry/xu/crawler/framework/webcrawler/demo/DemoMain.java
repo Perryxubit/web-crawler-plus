@@ -10,9 +10,10 @@ public class DemoMain {
 		PropertyConfigurator.configure("src/resources/log4j.properties");
 
 		CrawlerConfiguration configuration = new CrawlerConfiguration();
-//		configuration.addSeed("http://www.mmonly.cc/mmtp/list_9_1.html");
+		configuration.addSeed("http://www.mmonly.cc/mmtp/list_9_1.html");
 //		configuration.addSeed("http://www.mmonly.cc/mmtp/xgmn/303995.html");
-		configuration.setMaxThreadNumber(1);
+		configuration.setMaxThreadNumber(2);
+		configuration.setWorkSpace("D:\\Development Testing & Script\\web-crawler-plus\\");
 		configuration.setParser(new DemoPageParser());
 
 		CrawlerController controller = new CrawlerController(configuration);

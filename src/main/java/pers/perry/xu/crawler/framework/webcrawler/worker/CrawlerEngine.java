@@ -3,13 +3,16 @@ package pers.perry.xu.crawler.framework.webcrawler.worker;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import lombok.extern.log4j.Log4j;
 import pers.perry.xu.crawler.framework.webcrawler.configuration.CrawlerConfiguration;
 import pers.perry.xu.crawler.framework.webcrawler.log.CrawlerLog;
 import pers.perry.xu.crawler.framework.webcrawler.utils.Utils;
 
+@Log4j
 public class CrawlerEngine {
 
-	private ExecutorService threadPool;
+	private ExecutorService threadPoolSeeds;
+	private ExecutorService threadPoolResources;
 
 	private CrawlerConfiguration configuration;
 
@@ -17,40 +20,62 @@ public class CrawlerEngine {
 
 	public CrawlerEngine(CrawlerConfiguration configuration) {
 		this.configuration = configuration;
-
 		this.crawlerLogging = new CrawlerLog();
 	}
 
-	public enum WorkerType {
-		SeedWorker, // only working on adding new seeds
-		ResourceWorker // only working on resource spider
-	}
-
 	/**
-	 * start worker with n threads. (1 <= n <= 10)
+	 * start worker with n threads. (1 <= n <= 20)
 	 * 
 	 * @param n thread number
 	 */
-	public void startWorkers(int n) {
-		if (n <= 1) {
-			n = 1;
-		} else if (n >= 10) {
-			n = 10;
+	public void startWorkers() {
+		int maxThreadsNr = configuration.getMaxThreadNumber();
+		int maxSeedsThreadsNr = configuration.getMaxThreadNumberSeedWorker();
+		int maxResourceThreadsNr = configuration.getMaxThreadNumberResourceWorker();
+
+		if (maxThreadsNr <= 2) {
+			maxThreadsNr = 2;
+			maxSeedsThreadsNr = 1;
+			maxResourceThreadsNr = 1;
+		} else if (maxThreadsNr >= 20) {
+			maxThreadsNr = 20;
+			maxSeedsThreadsNr = 4;
+			maxResourceThreadsNr = 16;
 		}
 
-		Utils.print("Crawler: Starting {} threads...", n);
-		threadPool = Executors.newFixedThreadPool(n);
-		try {
-			for (int i = 0; i < n; i++) {
-				CrawlerWorker thread = new CrawlerWorker(i + 1, configuration.getParser(), crawlerLogging);
-				threadPool.execute(thread);
+		Utils.print("Crawler: Starting {} threads...", maxThreadsNr);
 
+		// create seeds thread pool
+		int index = 0;
+		threadPoolSeeds = Executors.newFixedThreadPool(maxSeedsThreadsNr);
+		try {
+			for (; index < maxSeedsThreadsNr; index++) {
+				CrawlerWorker worker = new CrawlerWorker(index + 1, WorkerType.SeedWorker, configuration.getParser(),
+						crawlerLogging);
+				threadPoolSeeds.execute(worker);
 				Thread.sleep(configuration.getThreadCreateSleepTimeMS());
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		} finally {
+			threadPoolSeeds.shutdown();
 		}
-		threadPool.shutdown();
-		Utils.print("Crawler: crawler thread pool is destroyed.");
+
+		// create resources thread pool
+		threadPoolResources = Executors.newFixedThreadPool(maxResourceThreadsNr);
+		try {
+			for (int i = 0; i < maxResourceThreadsNr; i++) {
+				CrawlerWorker worker = new CrawlerWorker(index + i + 1, WorkerType.ResourceWorker,
+						configuration.getParser(), crawlerLogging);
+				threadPoolResources.execute(worker);
+				Thread.sleep(configuration.getThreadCreateSleepTimeMS());
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			threadPoolResources.shutdown();
+		}
+
+		log.info("Crawler thread pools are destroyed.");
 	}
 }
