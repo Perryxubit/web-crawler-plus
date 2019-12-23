@@ -22,13 +22,21 @@ public class CrawlerWorker implements Runnable {
 
 	private static int QUEUE_FULL_WAIT = 5000;
 
+	/**
+	 * 2 types of worker (seed:resource = 1:4 by default):
+	 * 
+	 * 1.seed worker: The main worker, working for adding seed and crawling
+	 * resources.
+	 * 
+	 * 2. resource worker: The slave worker, only working for crawling resources.
+	 */
 	CrawlerWorker(int index, WorkerType type, WebPageParser pageParser, CrawlerLog crawlerLogging) {
 		this.threadIndex = index;
 		this.workerType = type;
 		this.pageParser = pageParser;
 		this.crawlerLogging = crawlerLogging;
 
-		Utils.print("Worker thread {} ({}) is created and running...", threadIndex, type);
+		Utils.print("Worker thread {} ({}) is created and running...", threadIndex, type == null ? "NULL" : type);
 	}
 
 	public void run() {
@@ -73,6 +81,10 @@ public class CrawlerWorker implements Runnable {
 		// check if we have url contained in the current page which needs to be added in
 		// to MQ. -> if yes, add to the MQ
 		List<String> urlList = pageParser.getSeedUrlsList(page.getWebBody());
+		System.out.println("url list:" + urlList.size());
+		for (int i = 0; i < urlList.size(); i++) {
+			System.out.println(urlList.get(i));
+		}
 		if (urlList == null || urlList.size() == 0) {
 			return;
 		}

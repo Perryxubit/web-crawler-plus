@@ -13,6 +13,7 @@ public class CrawlerEngine {
 
 	private ExecutorService threadPoolSeeds;
 	private ExecutorService threadPoolResources;
+//	private ExecutorService threadPool;
 
 	private CrawlerConfiguration configuration;
 
@@ -75,7 +76,6 @@ public class CrawlerEngine {
 		} finally {
 			threadPoolResources.shutdown();
 		}
-
 		log.info("Crawler thread pools are destroyed.");
 	}
 }

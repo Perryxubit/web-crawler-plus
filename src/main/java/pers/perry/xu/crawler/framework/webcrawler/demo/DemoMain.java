@@ -13,7 +13,7 @@ public class DemoMain {
 //		configuration.addSeed("http://www.mmonly.cc/mmtp/list_9_1.html");
 //		configuration.addSeed("http://www.mmonly.cc/mmtp/xgmn/303995.html");
 		configuration.addSeed("https://www.tgbus.com/news/63281");
-		configuration.setMaxThreadNumber(2);
+		configuration.setMaxThreadNumber(5);
 		configuration.setWorkSpace("D:\\Development Testing & Script\\web-crawler-plus\\");
 //		configuration.setParser(new DemoPageParser());
 		configuration.setParser(new TGBusPageParser());
