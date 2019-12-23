@@ -31,6 +31,9 @@ public class CrawlerConfiguration {
 	@Setter
 	private int pageRetrieveSleepTimeMS = 500;
 
+	@Setter
+	private int downloadWaitTimeMS = 1000;
+
 	private int maxThreadNumber = 5; // default is 5
 	private int maxThreadNumberSeedWorker = 1;
 	private int maxThreadNumberResourceWorker = 4;

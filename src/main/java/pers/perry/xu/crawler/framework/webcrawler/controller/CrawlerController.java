@@ -35,7 +35,7 @@ public class CrawlerController {
 			List<String> seedList = configuration.getSeedList();
 			for (String seed : seedList) {
 				try {
-					MessageBroker.addMessage(seed);
+					MessageBroker.addMessage(seed, null);
 					Thread.sleep(200);
 				} catch (InterruptedException e) {
 					e.printStackTrace();

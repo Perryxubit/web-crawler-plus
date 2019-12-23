@@ -36,7 +36,7 @@ public class DemoPageParser implements WebPageParser {
 		return targetList;
 	}
 
-	private List<String> getMatchingList(List<String> patterns, String html) {
+	protected List<String> getMatchingList(List<String> patterns, String html) {
 		List<String> targetList = new ArrayList<String>();
 		for (String pattern : patterns) {
 			// get matching url for each pattern, and add into queue
