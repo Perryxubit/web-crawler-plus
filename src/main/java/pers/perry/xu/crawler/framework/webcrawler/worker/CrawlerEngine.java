@@ -5,7 +5,6 @@ import java.util.concurrent.Executors;
 
 import lombok.extern.log4j.Log4j;
 import pers.perry.xu.crawler.framework.webcrawler.configuration.CrawlerConfiguration;
-import pers.perry.xu.crawler.framework.webcrawler.log.CrawlerLog;
 import pers.perry.xu.crawler.framework.webcrawler.utils.Utils;
 
 @Log4j
@@ -17,11 +16,8 @@ public class CrawlerEngine {
 
 	private CrawlerConfiguration configuration;
 
-	private CrawlerLog crawlerLogging;
-
 	public CrawlerEngine(CrawlerConfiguration configuration) {
 		this.configuration = configuration;
-		this.crawlerLogging = new CrawlerLog();
 	}
 
 	/**
@@ -52,7 +48,7 @@ public class CrawlerEngine {
 		try {
 			for (; index < maxSeedsThreadsNr; index++) {
 				CrawlerWorker worker = new CrawlerWorker(index + 1, WorkerType.SeedWorker, configuration.getParser(),
-						crawlerLogging);
+						configuration);
 				threadPoolSeeds.execute(worker);
 				Thread.sleep(configuration.getThreadCreateSleepTimeMS());
 			}
@@ -67,7 +63,7 @@ public class CrawlerEngine {
 		try {
 			for (int i = 0; i < maxResourceThreadsNr; i++) {
 				CrawlerWorker worker = new CrawlerWorker(index + i + 1, WorkerType.ResourceWorker,
-						configuration.getParser(), crawlerLogging);
+						configuration.getParser(), configuration);
 				threadPoolResources.execute(worker);
 				Thread.sleep(configuration.getThreadCreateSleepTimeMS());
 			}

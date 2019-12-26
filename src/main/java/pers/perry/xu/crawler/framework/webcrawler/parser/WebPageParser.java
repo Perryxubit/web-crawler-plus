@@ -4,13 +4,19 @@ import java.util.List;
 
 import org.jsoup.nodes.Element;
 
+import pers.perry.xu.crawler.framework.webcrawler.model.WebMedia;
+
 public interface WebPageParser {
 
 	/**
-	 * get the pictures list from the given Html body element
+	 * extract the media data (e.g. picture, voice, video, etc) from the given web
+	 * body element
 	 */
-	public List<String> getPicturesUrlsList(Element bodyElement);
+	public List<WebMedia> getMediaDataList(Element bodyElement);
 
+	/**
+	 * extract the text from the given web body element
+	 */
 	public String visitText(Element bodyElement);
 
 	/**

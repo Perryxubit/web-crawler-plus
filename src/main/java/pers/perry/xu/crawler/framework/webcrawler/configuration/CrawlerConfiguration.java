@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j;
+import pers.perry.xu.crawler.framework.webcrawler.log.CrawlerLog;
 import pers.perry.xu.crawler.framework.webcrawler.parser.WebPageParser;
 
 @ToString
@@ -43,6 +44,10 @@ public class CrawlerConfiguration {
 	private ArrayList<String> seedList;
 
 	private final String RUNTIME_WORKSPACE_DIR = "wcpruntime";
+	private final String RUNTIME_WORKSPACE_OUTPUT = "output";
+	private final String RUNTIME_WORKSPACE_LOG = "wcplog";
+
+	private CrawlerLog crawlerLogHandler;
 
 	public CrawlerConfiguration() {
 		initConfiguration();
@@ -81,16 +86,19 @@ public class CrawlerConfiguration {
 
 	private void initConfiguration() {
 		seedList = new ArrayList<String>();
-//		if (!StringUtils.isEmpty(workspacePath)) {
-//			initWorkSpace();
-//		}
+		// each configuration are only supporting one log handler
+		crawlerLogHandler = new CrawlerLog();
 	}
 
 	private void initWorkSpace() {
 		try {
-			logBasePath = Paths.get(workspacePath + File.separator + this.RUNTIME_WORKSPACE_DIR);
-			if (!Files.exists(logBasePath)) {
+			String baseUrl = workspacePath + File.separator + this.RUNTIME_WORKSPACE_DIR;
+			logBasePath = Paths.get(baseUrl);
+			if (!Files.exists(logBasePath)) { // init workspace directories
 				Files.createDirectories(logBasePath);
+				Files.createDirectory(Paths.get(baseUrl + File.separator + RUNTIME_WORKSPACE_LOG));
+				Files.createDirectory(Paths.get(baseUrl + File.separator + RUNTIME_WORKSPACE_OUTPUT));
+				log.info("Workspace directories is initialized.");
 			}
 		} catch (IOException e) {
 			log.error("Error when initializing configuration: " + e.getMessage());

@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 
 import org.jsoup.nodes.Element;
 
+import pers.perry.xu.crawler.framework.webcrawler.model.WebMedia;
 import pers.perry.xu.crawler.framework.webcrawler.parser.WebPageParser;
 
 public class DemoPageParser implements WebPageParser {
@@ -23,17 +24,18 @@ public class DemoPageParser implements WebPageParser {
 		return "(?<=<img alt=\")[\\u4e00-\\u9fa5]+(?=\"\\s+src)";
 	}
 
-	public List<String> getPicturesUrlsList(Element bodyElement) {
-		List<String> targetList = new ArrayList<String>();
-		String pattern = "src=\"(.+?\\.jpg)\"";
-		Pattern webPattern = Pattern.compile(pattern);
-		Matcher webMatcher = webPattern.matcher(bodyElement.toString());
-		while (webMatcher.find()) {
-			String res = webMatcher.group();
-			res = res.replace("src=", "").replace("\"", "");
-			targetList.add(res);
-		}
-		return targetList;
+	public List<WebMedia> getMediaDataList(Element bodyElement) {
+//		List<String> targetList = new ArrayList<String>();
+//		String pattern = "src=\"(.+?\\.jpg)\"";
+//		Pattern webPattern = Pattern.compile(pattern);
+//		Matcher webMatcher = webPattern.matcher(bodyElement.toString());
+//		while (webMatcher.find()) {
+//			String res = webMatcher.group();
+//			res = res.replace("src=", "").replace("\"", "");
+//			targetList.add(res);
+//		}
+//		return targetList;
+		return null;
 	}
 
 	protected List<String> getMatchingList(List<String> patterns, String html) {

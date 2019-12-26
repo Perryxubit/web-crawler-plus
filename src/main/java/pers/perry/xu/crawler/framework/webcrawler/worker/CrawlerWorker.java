@@ -6,8 +6,9 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import lombok.extern.log4j.Log4j;
-import pers.perry.xu.crawler.framework.webcrawler.log.CrawlerLog;
+import pers.perry.xu.crawler.framework.webcrawler.configuration.CrawlerConfiguration;
 import pers.perry.xu.crawler.framework.webcrawler.message.MessageBroker;
+import pers.perry.xu.crawler.framework.webcrawler.model.WebMedia;
 import pers.perry.xu.crawler.framework.webcrawler.model.WebPage;
 import pers.perry.xu.crawler.framework.webcrawler.parser.WebPageParser;
 import pers.perry.xu.crawler.framework.webcrawler.utils.Utils;
@@ -17,8 +18,8 @@ public class CrawlerWorker implements Runnable {
 
 	private int threadIndex;
 	private WebPageParser pageParser;
-	private CrawlerLog crawlerLogging;
 	private WorkerType workerType;
+	private CrawlerConfiguration configuration;
 
 	private static int QUEUE_FULL_WAIT = 5000;
 
@@ -30,11 +31,11 @@ public class CrawlerWorker implements Runnable {
 	 * 
 	 * 2. resource worker: The slave worker, only working for crawling resources.
 	 */
-	CrawlerWorker(int index, WorkerType type, WebPageParser pageParser, CrawlerLog crawlerLogging) {
+	CrawlerWorker(int index, WorkerType type, WebPageParser pageParser, CrawlerConfiguration configuration) {
 		this.threadIndex = index;
 		this.workerType = type;
 		this.pageParser = pageParser;
-		this.crawlerLogging = crawlerLogging;
+		this.configuration = configuration;
 
 		Utils.print("Worker thread {} ({}) is created and running...", threadIndex, type == null ? "NULL" : type);
 	}
@@ -46,7 +47,7 @@ public class CrawlerWorker implements Runnable {
 			// resource worker only works on resource MQ
 			String nextTargetUrl = MessageBroker.getOrCreateMessageQueueBroker(workerType).getMessage(threadIndex);
 
-			crawlerLogging.addToHistory(nextTargetUrl);
+			configuration.getCrawlerLogHandler().addToHistory(nextTargetUrl);
 			Utils.print("Worker thread {}: running crawler on next url: {}", threadIndex, nextTargetUrl);
 
 			try {
@@ -86,12 +87,12 @@ public class CrawlerWorker implements Runnable {
 				return;
 			}
 			for (String url : urlList) {
-				if (!crawlerLogging.isInHistory(url)) { // only add new url
+				if (!configuration.getCrawlerLogHandler().isInHistory(url)) { // only add new url
 					Utils.print("Worker thread {}: sub url seed added {}", threadIndex, url);
 					// for each new seed url, add them to both seed worker MQ and resource worker MQ
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.SeedWorker).addMessage(url, threadIndex);
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.ResourceWorker).addMessage(url, threadIndex);
-					crawlerLogging.addToHistory(url);
+					configuration.getCrawlerLogHandler().addToHistory(url);
 				}
 			}
 			break;
@@ -99,11 +100,13 @@ public class CrawlerWorker implements Runnable {
 			// check if we have pageParser.visitTextPattern()
 			// TODO:
 
-			// check if we have pageParser.visitPicturePattern()
-			List<String> picList = pageParser.getPicturesUrlsList(page.getWebBody());
-			if (picList != null && picList.size() > 0) {
-				for (String pic : picList) {
-					Utils.print("### Worker thread {}: pic - {}", threadIndex, pic);
+			// parse web body and extract interesting media data
+			List<WebMedia> mediaList = pageParser.getMediaDataList(page.getWebBody());
+			if (mediaList != null && mediaList.size() > 0) {
+				for (WebMedia mediaData : mediaList) {
+					Utils.print("### Worker thread {}: media - {}", threadIndex, mediaData.getName());
+					// download media into given workspace path
+					downloadMediaIntoWorkspace(mediaData);
 				}
 			}
 			break;
@@ -113,4 +116,8 @@ public class CrawlerWorker implements Runnable {
 		}
 	}
 
+	private void downloadMediaIntoWorkspace(WebMedia webMediaData) {
+		// TODO:
+
+	}
 }
