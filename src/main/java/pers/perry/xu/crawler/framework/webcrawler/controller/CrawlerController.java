@@ -35,8 +35,9 @@ public class CrawlerController {
 
 			List<String> seedList = configuration.getSeedList();
 			for (String seed : seedList) {
-				try { // insert seeds into SEED MQ
+				try { // insert seeds into both RESOURCE and SEED MQs
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.SeedWorker).addMessage(seed, null);
+					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.ResourceWorker).addMessage(seed, null);
 					Thread.sleep(200);
 				} catch (InterruptedException e) {
 					e.printStackTrace();

@@ -119,13 +119,22 @@ public class CrawlerConfiguration {
 	private void initWorkSpace() {
 		try {
 			String baseUrl = workspacePath + File.separator + this.RUNTIME_WORKSPACE_DIR;
-			runtimeBasePath = Paths.get(baseUrl);
+			// create runtime base
+			this.runtimeBasePath = Paths.get(baseUrl);
 			if (!Files.exists(runtimeBasePath)) { // init workspace directories
 				Files.createDirectories(runtimeBasePath);
-				Files.createDirectory(Paths.get(baseUrl + File.separator + RUNTIME_WORKSPACE_LOG));
-				Files.createDirectory(Paths.get(baseUrl + File.separator + RUNTIME_WORKSPACE_OUTPUT));
-				log.info("Workspace directories is initialized.");
 			}
+			// create log folder
+			this.wcpLogPath = Paths.get(baseUrl + File.separator + RUNTIME_WORKSPACE_LOG);
+			if (!Files.exists(wcpLogPath)) {
+				Files.createDirectory(wcpLogPath);
+			}
+			// create output folder
+			this.wcpOutputPath = Paths.get(baseUrl + File.separator + RUNTIME_WORKSPACE_OUTPUT);
+			if (!Files.exists(wcpOutputPath)) {
+				Files.createDirectory(wcpOutputPath);
+			}
+			log.info("Workspace directories is initialized.");
 		} catch (IOException e) {
 			log.error("Error when initializing configuration: " + e.getMessage());
 		}

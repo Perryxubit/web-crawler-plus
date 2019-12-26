@@ -5,8 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -74,7 +74,7 @@ public class CrawlerWorker implements Runnable {
 
 				parseWebPage(page);
 			} catch (Exception e) {
-				Utils.print("error: {}", e.getMessage());
+				log.error("error happen when parsing webpage: " + e.getMessage());
 			}
 			Utils.print("Worker thread {}: {} is done.", threadIndex, nextTargetUrl);
 
@@ -91,7 +91,7 @@ public class CrawlerWorker implements Runnable {
 		case SeedWorker:
 			// check if we have url contained in the current page which needs to be added in
 			// to MQ. -> if yes, add to the MQ
-			List<String> urlList = pageParser.getSeedUrlsList(page.getWebBody());
+			List<String> urlList = pageParser.getSeedUrlsList(page);
 			if (urlList == null || urlList.size() == 0) {
 				return;
 			}
@@ -108,7 +108,7 @@ public class CrawlerWorker implements Runnable {
 		case ResourceWorker:
 			// check if we have pageParser.visitTextPattern()
 			// TODO:
-			String content = pageParser.getText(page.getWebBody());
+			String content = pageParser.getText(page);
 			if (!StringUtils.isEmpty(content)) {
 				switch (configuration.getOutputMode()) {
 				case PrintInConsole:
@@ -125,7 +125,7 @@ public class CrawlerWorker implements Runnable {
 			}
 
 			// parse web body and extract interesting media data
-			List<WebMedia> mediaList = pageParser.getMediaDataList(page.getWebBody());
+			List<WebMedia> mediaList = pageParser.getMediaDataList(page);
 			if (mediaList != null && mediaList.size() > 0) {
 				for (WebMedia mediaData : mediaList) {
 					// send media data to output method:
@@ -160,15 +160,21 @@ public class CrawlerWorker implements Runnable {
 
 	private void downloadMediaIntoWorkspace(WebMedia webMediaData) {
 		switch (webMediaData.getMediaType()) {
-		case Picture: // download pictures
+		// download pictures
+		case JPG:
+		case PNG:
 			String picUrl = webMediaData.getMediaUrl();
 			String picName = webMediaData.getName();
 
-			URLConnection con;
 			try {
-				con = new URL(picUrl).openConnection();
-				con.setConnectTimeout(configuration.getMediaDownloadTimeoutMS());
+				HttpURLConnection con = openConnectionToUrl(picUrl);
+				if (!picName.contains(".")) {
+					picName += "." + webMediaData.getMediaType().toString().toLowerCase();
+				}
+				picName = formatFileName(picName);
 				File savedFile = new File(configuration.getWcpOutputPath() + File.separator + picName + "");
+
+				log.info("saving file to " + savedFile);
 				try (InputStream is = con.getInputStream(); OutputStream os = new FileOutputStream(savedFile)) {
 					byte[] bs = new byte[1024];
 					int len;
@@ -176,12 +182,42 @@ public class CrawlerWorker implements Runnable {
 						os.write(bs, 0, len);
 					}
 				}
+				con.disconnect();
 			} catch (IOException e) {
-				log.error(e.getMessage());
+				e.printStackTrace();
 			}
 			break;
 		default:
 			break;
 		}
 	}
+
+	private HttpURLConnection openConnectionToUrl(String url) {
+		try {
+			HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
+			con.setConnectTimeout(configuration.getMediaDownloadTimeoutMS());
+			con.setReadTimeout(configuration.getMediaDownloadTimeoutMS());
+			con.addRequestProperty("Accept", "text/html");
+			con.addRequestProperty("Accept-Charset", "utf-8");
+			con.addRequestProperty("Accept-Encoding", "gzip");
+			con.addRequestProperty("Accept-Language", "en-US,en");
+			con.addRequestProperty("User-Agent",
+					"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36");
+			con.connect();
+//			System.out.println("状态码：" + con.getResponseCode());
+			return con;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	private String formatFileName(String filename) {
+		String[] badChar = { "?", "\\", "/", "、", "*", "“", "\"", "”", "<", ">", "|", "," };
+		for (String chars : badChar) {
+			filename = filename.replace(chars, "_");
+		}
+		return filename.replace(" ", "");
+	}
+
 }
