@@ -6,6 +6,7 @@ import lombok.extern.log4j.Log4j;
 import pers.perry.xu.crawler.framework.webcrawler.configuration.CrawlerConfiguration;
 import pers.perry.xu.crawler.framework.webcrawler.message.MessageBroker;
 import pers.perry.xu.crawler.framework.webcrawler.worker.CrawlerEngine;
+import pers.perry.xu.crawler.framework.webcrawler.worker.WorkerType;
 
 @Log4j
 public class CrawlerController {
@@ -34,8 +35,8 @@ public class CrawlerController {
 
 			List<String> seedList = configuration.getSeedList();
 			for (String seed : seedList) {
-				try {
-					MessageBroker.addMessage(seed, null);
+				try { // insert seeds into SEED MQ
+					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.SeedWorker).addMessage(seed, null);
 					Thread.sleep(200);
 				} catch (InterruptedException e) {
 					e.printStackTrace();

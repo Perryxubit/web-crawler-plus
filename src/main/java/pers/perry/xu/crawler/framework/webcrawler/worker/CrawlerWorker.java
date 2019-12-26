@@ -42,10 +42,9 @@ public class CrawlerWorker implements Runnable {
 	public void run() {
 		// we need to first make sure crawlerController is not null!
 		while (true) {
-//			String nextTargetUrl = workerType == WorkerType.SeedWorker
-//					? MessageBroker.getMessageWithWaiting(threadIndex)
-//					: MessageBroker.getMessage(threadIndex);
-			String nextTargetUrl = MessageBroker.getMessage(threadIndex);
+			// seed worker only works on seed MQ
+			// resource worker only works on resource MQ
+			String nextTargetUrl = MessageBroker.getOrCreateMessageQueueBroker(workerType).getMessage(threadIndex);
 
 			crawlerLogging.addToHistory(nextTargetUrl);
 			Utils.print("Worker thread {}: running crawler on next url: {}", threadIndex, nextTargetUrl);
@@ -78,85 +77,39 @@ public class CrawlerWorker implements Runnable {
 	}
 
 	private void parseWebPage(WebPage page) {
-		// check if we have url contained in the current page which needs to be added in
-		// to MQ. -> if yes, add to the MQ
-		List<String> urlList = pageParser.getSeedUrlsList(page.getWebBody());
-		System.out.println("url list:" + urlList.size());
-		for (int i = 0; i < urlList.size(); i++) {
-			System.out.println(urlList.get(i));
-		}
-		if (urlList == null || urlList.size() == 0) {
-			return;
-		}
-		for (String url : urlList) {
-			if (!crawlerLogging.isInHistory(url)) { // only add new url
-				Utils.print("Worker thread {}: sub url seed added {}", threadIndex, url);
-				addToMQOrWait(url);
-				crawlerLogging.addToHistory(url);
+		switch (workerType) {
+		case SeedWorker:
+			// check if we have url contained in the current page which needs to be added in
+			// to MQ. -> if yes, add to the MQ
+			List<String> urlList = pageParser.getSeedUrlsList(page.getWebBody());
+			if (urlList == null || urlList.size() == 0) {
+				return;
 			}
-		}
-
-		// check if we have pageParser.visitTextPattern()
-		// TODO:
-
-		// check if we have pageParser.visitPicturePattern()
-		List<String> picList = pageParser.getPicturesUrlsList(page.getWebBody());
-		if (picList != null && picList.size() > 0) {
-			for (String pic : picList) {
-				Utils.print("### Worker thread {}: pic - {}", threadIndex, pic);
+			for (String url : urlList) {
+				if (!crawlerLogging.isInHistory(url)) { // only add new url
+					Utils.print("Worker thread {}: sub url seed added {}", threadIndex, url);
+					// for each new seed url, add them to both seed worker MQ and resource worker MQ
+					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.SeedWorker).addMessage(url, threadIndex);
+					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.ResourceWorker).addMessage(url, threadIndex);
+					crawlerLogging.addToHistory(url);
+				}
 			}
-		}
-	}
+			break;
+		case ResourceWorker:
+			// check if we have pageParser.visitTextPattern()
+			// TODO:
 
-//	private void parseWebPage(WebPage page) {
-//		switch (workerType) {
-//		case SeedWorker:
-//			// check if we have url contained in the current page which needs to be added in
-//			// to MQ. -> if yes, add to the MQ
-//			List<String> urlList = pageParser.getSeedUrlsList(page.getWebBody());
-//			if (urlList == null || urlList.size() == 0) {
-//				return;
-//			}
-//			for (String url : urlList) {
-//				if (!crawlerLogging.isInHistory(url)) { // only add new url
-//					Utils.print("Worker thread {}: sub url seed added {}", threadIndex, url);
-//					addToMQOrWait(url);
-//					crawlerLogging.addToHistory(url);
-//				}
-//			}
-//			break;
-//		case ResourceWorker:
-//			// check if we have pageParser.visitTextPattern()
-//			// TODO:
-//
-//			// check if we have pageParser.visitPicturePattern()
-//			List<String> picList = pageParser.getPicturesUrlsList(page.getWebBody());
-//			if (picList != null && picList.size() > 0) {
-//				for (String pic : picList) {
-//					Utils.print("### Worker thread {}: pic - {}", threadIndex, pic);
-//				}
-//			}
-//			break;
-//		default:
-//			log.error("worker type is not supported.");
-//			break;
-//		}
-//	}
-
-	private void addToMQOrWait(String url) {
-		// if add to MQ failed then wait
-		long timer = QUEUE_FULL_WAIT;
-		try {
-			while (!MessageBroker.addMessage(url, threadIndex)) {
-				Utils.print("Worker thread {}: Queue is full, waiting {} ms (totally waited {} ms )...", threadIndex,
-						QUEUE_FULL_WAIT, timer);
-
-				// sleep some seconds and try until there are more than half spaces in the queue
-				Thread.sleep(QUEUE_FULL_WAIT);
-				timer += QUEUE_FULL_WAIT;
+			// check if we have pageParser.visitPicturePattern()
+			List<String> picList = pageParser.getPicturesUrlsList(page.getWebBody());
+			if (picList != null && picList.size() > 0) {
+				for (String pic : picList) {
+					Utils.print("### Worker thread {}: pic - {}", threadIndex, pic);
+				}
 			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+			break;
+		default:
+			log.error("worker type is not supported.");
+			break;
 		}
 	}
 
