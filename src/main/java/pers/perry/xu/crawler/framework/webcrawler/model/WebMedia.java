@@ -1,8 +1,10 @@
 package pers.perry.xu.crawler.framework.webcrawler.model;
 
+import lombok.Getter;
 import lombok.ToString;
 
 @ToString
+@Getter
 public class WebMedia extends WebResource {
 
 	protected String mediaUrl;

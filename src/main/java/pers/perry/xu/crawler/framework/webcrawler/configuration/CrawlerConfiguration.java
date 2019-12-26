@@ -18,36 +18,62 @@ import pers.perry.xu.crawler.framework.webcrawler.log.CrawlerLog;
 import pers.perry.xu.crawler.framework.webcrawler.parser.WebPageParser;
 
 @ToString
-@Getter
 @AllArgsConstructor
 @Log4j
 public class CrawlerConfiguration {
 
 	@Setter
+	@Getter
 	private WebPageParser parser;
 
 	@Setter
+	@Getter
 	private int threadCreateSleepTimeMS = 200;
 
 	@Setter
+	@Getter
 	private int pageRetrieveSleepTimeMS = 500;
 
 	@Setter
+	@Getter
+	private int mediaDownloadTimeoutMS = 5000;
+
+	@Setter
+	@Getter
 	private int downloadWaitTimeMS = 1000;
 
+	@Getter
 	private int maxThreadNumber = 5; // default is 5
+	@Getter
 	private int maxThreadNumberSeedWorker = 1;
+	@Getter
 	private int maxThreadNumberResourceWorker = 4;
 
+	@Getter
 	private String workspacePath = null;
-	private Path logBasePath = null;
+
+	private Path runtimeBasePath = null;
+	@Getter
+	private Path wcpLogPath = null;
+	@Getter
+	private Path wcpOutputPath = null;
+	@Getter
 	private ArrayList<String> seedList;
 
 	private final String RUNTIME_WORKSPACE_DIR = "wcpruntime";
 	private final String RUNTIME_WORKSPACE_OUTPUT = "output";
 	private final String RUNTIME_WORKSPACE_LOG = "wcplog";
 
+	@Getter
 	private CrawlerLog crawlerLogHandler;
+
+	public enum DataOutputMode {
+		PrintInConsole, DownloadToFiles
+	}
+
+	@Setter
+	@Getter
+	private DataOutputMode outputMode = DataOutputMode.PrintInConsole; // print in console by default
 
 	public CrawlerConfiguration() {
 		initConfiguration();
@@ -93,9 +119,9 @@ public class CrawlerConfiguration {
 	private void initWorkSpace() {
 		try {
 			String baseUrl = workspacePath + File.separator + this.RUNTIME_WORKSPACE_DIR;
-			logBasePath = Paths.get(baseUrl);
-			if (!Files.exists(logBasePath)) { // init workspace directories
-				Files.createDirectories(logBasePath);
+			runtimeBasePath = Paths.get(baseUrl);
+			if (!Files.exists(runtimeBasePath)) { // init workspace directories
+				Files.createDirectories(runtimeBasePath);
 				Files.createDirectory(Paths.get(baseUrl + File.separator + RUNTIME_WORKSPACE_LOG));
 				Files.createDirectory(Paths.get(baseUrl + File.separator + RUNTIME_WORKSPACE_OUTPUT));
 				log.info("Workspace directories is initialized.");
@@ -115,8 +141,8 @@ public class CrawlerConfiguration {
 		} else if (StringUtils.isEmpty(workspacePath)) {
 			log.error("Workspace path is not set.");
 			return false;
-		} else if (!Files.exists(logBasePath)) {
-			log.error("Runtime directory (" + logBasePath + ") does not exist.");
+		} else if (!Files.exists(runtimeBasePath)) {
+			log.error("Runtime directory (" + runtimeBasePath + ") does not exist.");
 			return false;
 		}
 		log.info("Configuration check is passed.");

@@ -1,7 +1,15 @@
 package pers.perry.xu.crawler.framework.webcrawler.worker;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -40,6 +48,7 @@ public class CrawlerWorker implements Runnable {
 		Utils.print("Worker thread {} ({}) is created and running...", threadIndex, type == null ? "NULL" : type);
 	}
 
+	@Override
 	public void run() {
 		// we need to first make sure crawlerController is not null!
 		while (true) {
@@ -99,14 +108,39 @@ public class CrawlerWorker implements Runnable {
 		case ResourceWorker:
 			// check if we have pageParser.visitTextPattern()
 			// TODO:
+			String content = pageParser.getText(page.getWebBody());
+			if (!StringUtils.isEmpty(content)) {
+				switch (configuration.getOutputMode()) {
+				case PrintInConsole:
+					printOutputInConsole(content);
+					break;
+				case DownloadToFiles:
+					downloadTextIntoWorkspace(content);
+					break;
+				default:
+					printOutputInConsole(content);
+					break;
+				}
+				Utils.print("## Worker thread {}: text ", threadIndex);
+			}
 
 			// parse web body and extract interesting media data
 			List<WebMedia> mediaList = pageParser.getMediaDataList(page.getWebBody());
 			if (mediaList != null && mediaList.size() > 0) {
 				for (WebMedia mediaData : mediaList) {
-					Utils.print("### Worker thread {}: media - {}", threadIndex, mediaData.getName());
-					// download media into given workspace path
-					downloadMediaIntoWorkspace(mediaData);
+					// send media data to output method:
+					switch (configuration.getOutputMode()) {
+					case PrintInConsole:
+						printOutputInConsole(mediaData.getMediaUrl());
+						break;
+					case DownloadToFiles:
+						downloadMediaIntoWorkspace(mediaData);
+						break;
+					default:
+						printOutputInConsole(mediaData.getMediaUrl());
+						break;
+					}
+					Utils.print("## Worker thread {}: media - {}", threadIndex, mediaData.getName());
 				}
 			}
 			break;
@@ -116,8 +150,38 @@ public class CrawlerWorker implements Runnable {
 		}
 	}
 
-	private void downloadMediaIntoWorkspace(WebMedia webMediaData) {
-		// TODO:
+	private void printOutputInConsole(String content) {
+		System.out.println("# Output result in Console: \n" + content);
+	}
 
+	private void downloadTextIntoWorkspace(String content) {
+
+	}
+
+	private void downloadMediaIntoWorkspace(WebMedia webMediaData) {
+		switch (webMediaData.getMediaType()) {
+		case Picture: // download pictures
+			String picUrl = webMediaData.getMediaUrl();
+			String picName = webMediaData.getName();
+
+			URLConnection con;
+			try {
+				con = new URL(picUrl).openConnection();
+				con.setConnectTimeout(configuration.getMediaDownloadTimeoutMS());
+				File savedFile = new File(configuration.getWcpOutputPath() + File.separator + picName + "");
+				try (InputStream is = con.getInputStream(); OutputStream os = new FileOutputStream(savedFile)) {
+					byte[] bs = new byte[1024];
+					int len;
+					while ((len = is.read(bs)) != -1) {
+						os.write(bs, 0, len);
+					}
+				}
+			} catch (IOException e) {
+				log.error(e.getMessage());
+			}
+			break;
+		default:
+			break;
+		}
 	}
 }

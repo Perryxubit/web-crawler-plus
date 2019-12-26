@@ -3,6 +3,7 @@ package pers.perry.xu.crawler.framework.webcrawler.demo;
 import org.apache.log4j.PropertyConfigurator;
 
 import pers.perry.xu.crawler.framework.webcrawler.configuration.CrawlerConfiguration;
+import pers.perry.xu.crawler.framework.webcrawler.configuration.CrawlerConfiguration.DataOutputMode;
 import pers.perry.xu.crawler.framework.webcrawler.controller.CrawlerController;
 
 public class DemoMain {
@@ -13,6 +14,7 @@ public class DemoMain {
 //		configuration.addSeed("http://www.mmonly.cc/mmtp/list_9_1.html");
 //		configuration.addSeed("http://www.mmonly.cc/mmtp/xgmn/303995.html");
 		configuration.addSeed("https://www.tgbus.com/news/63281");
+		configuration.setOutputMode(DataOutputMode.PrintInConsole);
 		configuration.setMaxThreadNumber(2);
 		configuration.setWorkSpace("D:\\Development Testing & Script\\web-crawler-plus\\");
 //		configuration.setParser(new DemoPageParser());

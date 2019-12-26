@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.jsoup.nodes.Element;
 
-import pers.perry.xu.crawler.framework.webcrawler.model.MediaType;
 import pers.perry.xu.crawler.framework.webcrawler.model.WebMedia;
 import pers.perry.xu.crawler.framework.webcrawler.parser.WebPageParser;
 
@@ -14,12 +13,12 @@ public class TGBusPageParser extends DemoPageParser implements WebPageParser {
 	@Override
 	public List<WebMedia> getMediaDataList(Element bodyElement) {
 		List<WebMedia> list = new ArrayList<WebMedia>();
-		list.add(new WebMedia("", "", MediaType.Picture));
+//		list.add(new WebMedia("", "", MediaType.Picture));
 		return list;
 	}
 
 	@Override
-	public String visitText(Element bodyElement) {
+	public String getText(Element bodyElement) {
 		return null;
 	}
 

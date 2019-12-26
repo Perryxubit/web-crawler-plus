@@ -17,7 +17,7 @@ public interface WebPageParser {
 	/**
 	 * extract the text from the given web body element
 	 */
-	public String visitText(Element bodyElement);
+	public String getText(Element bodyElement);
 
 	/**
 	 * get the sub seed url list from the given Html body element

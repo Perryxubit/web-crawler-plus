@@ -12,18 +12,21 @@ import pers.perry.xu.crawler.framework.webcrawler.parser.WebPageParser;
 
 public class DemoPageParser implements WebPageParser {
 
+	@Override
 	public List<String> getSeedUrlsList(Element bodyElement) {
 		List<String> list = new ArrayList<String>();
 		list.add("http://www.mmonly.cc/mmtp/xgmn/[0-9]+.html");
 		return getMatchingList(list, bodyElement.toString());
 	}
 
-	public String visitText(Element bodyElement) {
+	@Override
+	public String getText(Element bodyElement) {
 		// 匹配exp前面的位置 (?=exp)
 		// 匹配exp后面的位置 (?<=exp)
 		return "(?<=<img alt=\")[\\u4e00-\\u9fa5]+(?=\"\\s+src)";
 	}
 
+	@Override
 	public List<WebMedia> getMediaDataList(Element bodyElement) {
 //		List<String> targetList = new ArrayList<String>();
 //		String pattern = "src=\"(.+?\\.jpg)\"";
