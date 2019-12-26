@@ -3,15 +3,16 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>pers.perry.xu.crawler.framework</groupId>
-  <artifactId>webcrawler</artifactId>
+  <artifactId>web-crawler-plus</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>webcrawler</name>
+  <name>web-crawler-plus</name>
   <url>http://maven.apache.org</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.version>1.8</java.version>
   </properties>
 
   <dependencies>

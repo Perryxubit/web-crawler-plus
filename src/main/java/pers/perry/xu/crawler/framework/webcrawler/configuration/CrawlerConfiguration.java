@@ -14,8 +14,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j;
-import pers.perry.xu.crawler.framework.webcrawler.log.CrawlerLog;
 import pers.perry.xu.crawler.framework.webcrawler.parser.WebPageParser;
+import pers.perry.xu.crawler.framework.webcrawler.records.CrawlerRecord;
 
 @ToString
 @AllArgsConstructor
@@ -65,7 +65,7 @@ public class CrawlerConfiguration {
 	private final String RUNTIME_WORKSPACE_LOG = "wcplog";
 
 	@Getter
-	private CrawlerLog crawlerLogHandler;
+	private CrawlerRecord crawlerLogHandler;
 
 	public enum DataOutputMode {
 		PrintInConsole, DownloadToFiles
@@ -113,7 +113,7 @@ public class CrawlerConfiguration {
 	private void initConfiguration() {
 		seedList = new ArrayList<String>();
 		// each configuration are only supporting one log handler
-		crawlerLogHandler = new CrawlerLog();
+		crawlerLogHandler = new CrawlerRecord();
 	}
 
 	private void initWorkSpace() {

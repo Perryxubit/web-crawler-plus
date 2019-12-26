@@ -1,13 +1,13 @@
-package pers.perry.xu.crawler.framework.webcrawler.log;
+package pers.perry.xu.crawler.framework.webcrawler.records;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class CrawlerLog {
+public class CrawlerRecord {
 
 //	private Set<String> historySet = null;
 	private ConcurrentSkipListSet<String> historySet;
 
-	public CrawlerLog() {
+	public CrawlerRecord() {
 		historySet = new ConcurrentSkipListSet<String>();
 //		historySet = Collections.synchronizedSet(new HashSet<String>());
 	}
