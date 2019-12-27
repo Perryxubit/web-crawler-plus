@@ -10,6 +10,8 @@ public class DemoMain {
 	public static void main(String[] args) {
 		PropertyConfigurator.configure("src/resources/log4j.properties");
 
+//		Logger.warn(Utils.getThreadLog(5, WorkerType.SeedWorker, "fuck"));
+
 		CrawlerConfiguration configuration = new CrawlerConfiguration();
 //		configuration.addSeed("http://www.mmonly.cc/mmtp/list_9_1.html");
 //		configuration.addSeed("http://www.mmonly.cc/ktmh/qbrw/96473.html");

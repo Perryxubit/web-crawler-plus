@@ -65,7 +65,10 @@ public class CrawlerConfiguration {
 	private final String RUNTIME_WORKSPACE_LOG = "wcplog";
 
 	@Getter
-	private CrawlerRecord crawlerLogHandler;
+	private final String wcpLogRecordFile = "wcp-records.dat";
+
+	@Getter
+	private CrawlerRecord crawlerRecordHandler;
 
 	public enum DataOutputMode {
 		PrintInConsole, DownloadToFiles
@@ -113,7 +116,7 @@ public class CrawlerConfiguration {
 	private void initConfiguration() {
 		seedList = new ArrayList<String>();
 		// each configuration are only supporting one log handler
-		crawlerLogHandler = new CrawlerRecord();
+		crawlerRecordHandler = new CrawlerRecord(this);
 	}
 
 	private void initWorkSpace() {

@@ -56,7 +56,7 @@ public class CrawlerWorker implements Runnable {
 			// resource worker only works on resource MQ
 			String nextTargetUrl = MessageBroker.getOrCreateMessageQueueBroker(workerType).getMessage(threadIndex);
 
-			configuration.getCrawlerLogHandler().addToHistory(nextTargetUrl);
+			configuration.getCrawlerRecordHandler().addToHistory(nextTargetUrl);
 			Utils.print("Worker thread {}: running crawler on next url: {}", threadIndex, nextTargetUrl);
 
 			try {
@@ -96,12 +96,12 @@ public class CrawlerWorker implements Runnable {
 				return;
 			}
 			for (String url : urlList) {
-				if (!configuration.getCrawlerLogHandler().isInHistory(url)) { // only add new url
+				if (!configuration.getCrawlerRecordHandler().isInHistory(url)) { // only add new url
 					Utils.print("Worker thread {}: sub url seed added {}", threadIndex, url);
 					// for each new seed url, add them to both seed worker MQ and resource worker MQ
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.SeedWorker).addMessage(url, threadIndex);
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.ResourceWorker).addMessage(url, threadIndex);
-					configuration.getCrawlerLogHandler().addToHistory(url);
+					configuration.getCrawlerRecordHandler().addToHistory(url);
 				}
 			}
 			break;

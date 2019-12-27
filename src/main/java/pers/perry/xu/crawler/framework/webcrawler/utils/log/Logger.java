@@ -13,40 +13,40 @@ public class Logger {
 	public static void debug(Object... args) {
 		if (LogProperties.LoggingLevel == LogLevel.DEBUG || LogProperties.LoggingLevel == LogLevel.INFO
 				|| LogProperties.LoggingLevel == LogLevel.WARN || LogProperties.LoggingLevel == LogLevel.ERROR) {
-			outputLogContent(args);
+			outputLogContent("DEBUG: ", args);
 		}
 	}
 
 	public static void info(Object... args) {
 		if (LogProperties.LoggingLevel == LogLevel.INFO || LogProperties.LoggingLevel == LogLevel.WARN
 				|| LogProperties.LoggingLevel == LogLevel.ERROR) {
-			outputLogContent(args);
+			outputLogContent("INFO:  ", args);
 		}
 	}
 
 	public static void warn(Object... args) {
 		if (LogProperties.LoggingLevel == LogLevel.WARN || LogProperties.LoggingLevel == LogLevel.ERROR) {
-			outputLogContent(args);
+			outputLogContent("WARN:  ", args);
 		}
 	}
 
 	public static void error(Object... args) {
 		if (LogProperties.LoggingLevel == LogLevel.ERROR) {
-			outputLogContent(args);
+			outputLogContent("ERROR: ", args);
 		}
 	}
 
-	private static void outputLogContent(Object... args) {
+	private static void outputLogContent(String level, Object... args) {
 		if (args.length == 0) {
 			return;
 		} else if (args.length == 1) {
-			output(args[0].toString());
+			output(level + args[0].toString());
 		} else {
 			String log = (String) args[0];
 			for (int i = 1; i < args.length; i++) { // replace each place holder
 				log = log.replaceFirst("\\{\\s*\\}", args[i].toString());
 			}
-			output(log);
+			output(level + log);
 		}
 	}
 
@@ -55,7 +55,7 @@ public class Logger {
 		String loggingTime = simpleDateFormat.format(new Date());
 
 		if (LogProperties.Mode == OutputMode.PrintInConsole) {
-			System.out.println("[" + loggingTime + "] " + content);
+			System.out.println("" + loggingTime + " " + content);
 		} else if (LogProperties.Mode == OutputMode.PrintInFile) {
 
 		}

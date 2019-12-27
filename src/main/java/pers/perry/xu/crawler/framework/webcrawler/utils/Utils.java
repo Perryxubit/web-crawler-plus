@@ -1,8 +1,12 @@
 package pers.perry.xu.crawler.framework.webcrawler.utils;
 
+import pers.perry.xu.crawler.framework.webcrawler.worker.WorkerType;
+
 public class Utils {
 
-	public static boolean debug = false;
+	public static String getThreadLog(int threadNr, WorkerType type, String content) {
+		return "(" + type + " Thr " + threadNr + ") " + content;
+	}
 
 	public static void print(Object... out) {
 		if (out.length == 0) {
