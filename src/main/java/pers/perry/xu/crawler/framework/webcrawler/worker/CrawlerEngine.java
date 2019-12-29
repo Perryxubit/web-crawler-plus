@@ -5,7 +5,7 @@ import java.util.concurrent.Executors;
 
 import lombok.extern.log4j.Log4j;
 import pers.perry.xu.crawler.framework.webcrawler.configuration.CrawlerConfiguration;
-import pers.perry.xu.crawler.framework.webcrawler.utils.Utils;
+import pers.perry.xu.crawler.framework.webcrawler.utils.Logging;
 
 @Log4j
 public class CrawlerEngine {
@@ -21,9 +21,8 @@ public class CrawlerEngine {
 	}
 
 	/**
-	 * start worker with n threads. (1 <= n <= 20)
+	 * start worker based on configuration. (1 <= thread number <= 20)
 	 * 
-	 * @param n thread number
 	 */
 	public void startWorkers() {
 		int maxThreadsNr = configuration.getMaxThreadNumber();
@@ -40,7 +39,7 @@ public class CrawlerEngine {
 			maxResourceThreadsNr = 16;
 		}
 
-		Utils.print("Crawler: Starting {} threads...", maxThreadsNr);
+		log.info(Logging.format("Crawler: Starting {} worker-threads...", maxThreadsNr));
 
 		// create seeds thread pool
 		int index = 0;
@@ -53,7 +52,7 @@ public class CrawlerEngine {
 				Thread.sleep(configuration.getThreadCreateSleepTimeMS());
 			}
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			log.error(Logging.format("Error happened when creating seed workers, error: {}", e.getMessage()));
 		} finally {
 			threadPoolSeeds.shutdown();
 		}
@@ -68,10 +67,10 @@ public class CrawlerEngine {
 				Thread.sleep(configuration.getThreadCreateSleepTimeMS());
 			}
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			log.error(Logging.format("Error happened when creating resource workers, error: {}", e.getMessage()));
 		} finally {
 			threadPoolResources.shutdown();
 		}
-		log.info("Crawler thread pools are destroyed.");
+		log.info(Logging.format("Crawler thread pools are destroyed."));
 	}
 }

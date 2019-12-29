@@ -19,7 +19,7 @@ import pers.perry.xu.crawler.framework.webcrawler.message.MessageBroker;
 import pers.perry.xu.crawler.framework.webcrawler.model.WebMedia;
 import pers.perry.xu.crawler.framework.webcrawler.model.WebPage;
 import pers.perry.xu.crawler.framework.webcrawler.parser.WebPageParser;
-import pers.perry.xu.crawler.framework.webcrawler.utils.Utils;
+import pers.perry.xu.crawler.framework.webcrawler.utils.Logging;
 
 @Log4j
 public class CrawlerWorker implements Runnable {
@@ -28,8 +28,6 @@ public class CrawlerWorker implements Runnable {
 	private WebPageParser pageParser;
 	private WorkerType workerType;
 	private CrawlerConfiguration configuration;
-
-	private static int QUEUE_FULL_WAIT = 5000;
 
 	/**
 	 * 2 types of worker (seed:resource = 1:4 by default):
@@ -44,8 +42,8 @@ public class CrawlerWorker implements Runnable {
 		this.workerType = type;
 		this.pageParser = pageParser;
 		this.configuration = configuration;
-
-		Utils.print("Worker thread {} ({}) is created and running...", threadIndex, type == null ? "NULL" : type);
+		log.info(Logging.format("Worker thread {} ({}) is created and running...", threadIndex,
+				type == null ? "NULL" : type));
 	}
 
 	@Override
@@ -55,37 +53,39 @@ public class CrawlerWorker implements Runnable {
 			// seed worker only works on seed MQ
 			// resource worker only works on resource MQ
 			String nextTargetUrl = MessageBroker.getOrCreateMessageQueueBroker(workerType).getMessage(threadIndex);
+			if (configuration.getCrawlerRecordHandler().isInHistory(nextTargetUrl)) {
+				continue;
+			}
 
-			configuration.getCrawlerRecordHandler().addToHistory(nextTargetUrl);
-			Utils.print("Worker thread {}: running crawler on next url: {}", threadIndex, nextTargetUrl);
-
+			log.info(Logging.format("Worker thread {}: running crawler on next url: {}", threadIndex, nextTargetUrl));
 			try {
 				// https://www.ibm.com/developerworks/cn/java/j-lo-jsouphtml/index.html
 				Document doc = Jsoup.connect(nextTargetUrl).get();
 				String title = doc.title();
 
-				Utils.print("# Worker thread {}: Title {}", threadIndex, title);
-
+				log.info(Logging.format("Working on worker thread {}: Title {}", threadIndex, title));
 				WebPage page = new WebPage();
 				page.setWebHead(doc.head());
 				page.setWebBody(doc.body());
 				page.setWebTitle(doc.title());
 				page.setWebUrl(nextTargetUrl);
-
 				parseWebPage(page);
-			} catch (Exception e) {
-				log.error("error happen when parsing webpage: " + e.getMessage());
-			}
-			Utils.print("Worker thread {}: {} is done.", threadIndex, nextTargetUrl);
+				configuration.getCrawlerRecordHandler().addToHistory(nextTargetUrl); // add to history
 
-			try {
 				Thread.sleep(200);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			} catch (Exception e) { // exit when encountering errors
+				log.error(Logging.format("Error happened when parsing webpage, error: {}", e.getMessage()));
+				break;
 			}
+			log.info(Logging.format("Worker thread {}: Crawling on url {} is done.", threadIndex, nextTargetUrl));
 		}
 	}
 
+	/**
+	 * Parse the WebPage and output the result according to the module.
+	 * 
+	 * @param page the WebPage to be crawled
+	 */
 	private void parseWebPage(WebPage page) {
 		switch (workerType) {
 		case SeedWorker:
@@ -97,7 +97,7 @@ public class CrawlerWorker implements Runnable {
 			}
 			for (String url : urlList) {
 				if (!configuration.getCrawlerRecordHandler().isInHistory(url)) { // only add new url
-					Utils.print("Worker thread {}: sub url seed added {}", threadIndex, url);
+					log.debug(Logging.format("Worker thread {}: sub url seed added {}", threadIndex, url));
 					// for each new seed url, add them to both seed worker MQ and resource worker MQ
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.SeedWorker).addMessage(url, threadIndex);
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.ResourceWorker).addMessage(url, threadIndex);
@@ -106,8 +106,7 @@ public class CrawlerWorker implements Runnable {
 			}
 			break;
 		case ResourceWorker:
-			// check if we have pageParser.visitTextPattern()
-			// TODO:
+			// # Get text data from crawler
 			String content = pageParser.getText(page);
 			if (!StringUtils.isEmpty(content)) {
 				switch (configuration.getOutputMode()) {
@@ -121,10 +120,10 @@ public class CrawlerWorker implements Runnable {
 					printOutputInConsole(content);
 					break;
 				}
-				Utils.print("## Worker thread {}: text ", threadIndex);
+				log.debug(Logging.format("# Worker thread {}: text ", threadIndex));
 			}
 
-			// parse web body and extract interesting media data
+			// # Get media data from crawler
 			List<WebMedia> mediaList = pageParser.getMediaDataList(page);
 			if (mediaList != null && mediaList.size() > 0) {
 				for (WebMedia mediaData : mediaList) {
@@ -140,24 +139,39 @@ public class CrawlerWorker implements Runnable {
 						printOutputInConsole(mediaData.getMediaUrl());
 						break;
 					}
-					Utils.print("## Worker thread {}: media - {}", threadIndex, mediaData.getName());
+					log.debug(Logging.format("# Worker thread {}: media - {}", threadIndex, mediaData.getName()));
 				}
 			}
 			break;
 		default:
-			log.error("worker type is not supported.");
+			log.error(Logging.format("worker type is not supported."));
 			break;
 		}
 	}
 
+	/**
+	 * Print result in console.
+	 * 
+	 * @param content the content to be displayed
+	 */
 	private void printOutputInConsole(String content) {
 		System.out.println("# Output result in Console: \n" + content);
 	}
 
+	/**
+	 * Download the text into file.
+	 * 
+	 * @param content the content to be downloaded
+	 */
 	private void downloadTextIntoWorkspace(String content) {
 
 	}
 
+	/**
+	 * Download the media file (e.g. pictures, video, music, etc.) into file.
+	 * 
+	 * @param webMediaData the media data to be downloaded
+	 */
 	private void downloadMediaIntoWorkspace(WebMedia webMediaData) {
 		switch (webMediaData.getMediaType()) {
 		// download pictures
@@ -184,14 +198,24 @@ public class CrawlerWorker implements Runnable {
 				}
 				con.disconnect();
 			} catch (IOException e) {
-				e.printStackTrace();
+				log.error(Logging.format("Error happened when exporting the media data, error: {}", e.getMessage()));
 			}
 			break;
+		case MP3:
+		case MP4:
+			// TODO: to be added
 		default:
+			log.info(Logging.format("Media type {} is not supported.", webMediaData.getMediaType()));
 			break;
 		}
 	}
 
+	/**
+	 * Open the connection to web resource and act like browser access.
+	 * 
+	 * @param url the URL for downnloading connection
+	 * @return the ready http connection
+	 */
 	private HttpURLConnection openConnectionToUrl(String url) {
 		try {
 			HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
@@ -204,7 +228,7 @@ public class CrawlerWorker implements Runnable {
 			con.addRequestProperty("User-Agent",
 					"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36");
 			con.connect();
-//			System.out.println("状态码：" + con.getResponseCode());
+//			System.out.println("status code：" + con.getResponseCode());
 			return con;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -212,6 +236,9 @@ public class CrawlerWorker implements Runnable {
 		return null;
 	}
 
+	/**
+	 * Format the filename.
+	 */
 	private String formatFileName(String filename) {
 		String[] badChar = { "?", "\\", "/", "、", "*", "“", "\"", "”", "<", ">", "|", "," };
 		for (String chars : badChar) {
@@ -219,5 +246,4 @@ public class CrawlerWorker implements Runnable {
 		}
 		return filename.replace(" ", "");
 	}
-
 }

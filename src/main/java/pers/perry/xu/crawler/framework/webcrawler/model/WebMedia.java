@@ -21,5 +21,4 @@ public class WebMedia extends WebResource {
 		this.mediaUrl = mediaUrl;
 		this.mediaType = type;
 	}
-
 }
