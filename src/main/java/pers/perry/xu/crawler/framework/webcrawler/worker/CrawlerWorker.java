@@ -1,12 +1,17 @@
 package pers.perry.xu.crawler.framework.webcrawler.worker;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -119,13 +124,13 @@ public class CrawlerWorker implements Runnable {
 			if (!StringUtils.isEmpty(content)) {
 				switch (configuration.getOutputMode()) {
 				case PrintInConsole:
-					printOutputInConsole(content);
+					printOutputInConsole("Text result:\n" + content);
 					break;
 				case DownloadToFiles:
-					downloadTextIntoWorkspace(content);
+					downloadTextIntoWorkspace(page.getWebTitle() + ".txt", content);
 					break;
 				default:
-					printOutputInConsole(content);
+					printOutputInConsole("Text result:\n" + content);
 					break;
 				}
 				log.debug(Logging.format("# Worker thread {}: text ", threadIndex));
@@ -138,13 +143,13 @@ public class CrawlerWorker implements Runnable {
 					// send media data to output method:
 					switch (configuration.getOutputMode()) {
 					case PrintInConsole:
-						printOutputInConsole(mediaData.getMediaUrl());
+						printOutputInConsole("Picture Resource Url [" + mediaData.getMediaUrl() + "]");
 						break;
 					case DownloadToFiles:
 						downloadMediaIntoWorkspace(mediaData);
 						break;
 					default:
-						printOutputInConsole(mediaData.getMediaUrl());
+						printOutputInConsole("Picture Resource Url [" + mediaData.getMediaUrl() + "]");
 						break;
 					}
 					log.debug(Logging.format("# Worker thread {}: media - {}", threadIndex, mediaData.getName()));
@@ -172,10 +177,24 @@ public class CrawlerWorker implements Runnable {
 	/**
 	 * Download the text into file.
 	 * 
-	 * @param content the content to be downloaded
+	 * @param content the content to download
 	 */
-	private void downloadTextIntoWorkspace(String content) {
-
+	private void downloadTextIntoWorkspace(String title, String content) {
+		String fileName = formatFileName(title);
+		try {
+			Path path = Paths.get(configuration.getWcpOutputPath() + File.separator + "Text" + File.separator);
+			if (!Files.exists(path)) {
+				Files.createDirectories(path);
+			}
+			String filePath = path.toString() + File.separator + fileName;
+			try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
+				log.info(Logging.format("# Saving text file to {}", filePath));
+				bw.write(content);
+				bw.newLine();
+			}
+		} catch (IOException e) {
+			log.error(Logging.format("Error happened when downloading text to files. error: {}", e.getMessage()));
+		}
 	}
 
 	/**
@@ -199,7 +218,7 @@ public class CrawlerWorker implements Runnable {
 				picName = formatFileName(picName);
 				File savedFile = new File(configuration.getWcpOutputPath() + File.separator + picName + "");
 
-				log.info("saving file to " + savedFile);
+				log.info(Logging.format("# Saving {} file to ", webMediaData.getMediaType(), savedFile));
 				try (InputStream is = con.getInputStream(); OutputStream os = new FileOutputStream(savedFile)) {
 					byte[] bs = new byte[1024];
 					int len;

@@ -6,6 +6,8 @@ public class Logging {
 		String log;
 		if (args.length == 0 || args == null) {
 			log = "";
+		} else if (args.length == 1) {
+			return (String) args[0];
 		} else {
 			log = (String) args[0];
 			for (int i = 1; i < args.length; i++) { // replace each place holder

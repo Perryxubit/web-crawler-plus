@@ -9,6 +9,8 @@ import pers.perry.xu.crawler.framework.webcrawler.parser.WebPageParser;
 
 public class TGBusPageParser extends DemoPageParser implements WebPageParser {
 
+	static int index = 0;
+
 	@Override
 	public List<WebMedia> getMediaDataList(WebPage page) {
 		List<WebMedia> list = new ArrayList<WebMedia>();
@@ -18,7 +20,7 @@ public class TGBusPageParser extends DemoPageParser implements WebPageParser {
 
 	@Override
 	public String getText(WebPage page) {
-		return null;
+		return "testtest " + ++index;
 	}
 
 	@Override
