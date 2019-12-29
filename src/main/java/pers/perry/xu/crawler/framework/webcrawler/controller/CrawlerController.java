@@ -46,7 +46,7 @@ public class CrawlerController {
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.ResourceWorker).addMessage(seed, null);
 					Thread.sleep(200);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					log.error(Logging.format("Error happened when starting crawler, error: {}", e.getMessage()));
 				}
 			}
 		} else {

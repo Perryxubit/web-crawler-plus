@@ -71,6 +71,6 @@ public class CrawlerEngine {
 		} finally {
 			threadPoolResources.shutdown();
 		}
-		log.info(Logging.format("Crawler thread pools are destroyed."));
+		log.debug(Logging.format("Crawler thread pools are destroyed."));
 	}
 }

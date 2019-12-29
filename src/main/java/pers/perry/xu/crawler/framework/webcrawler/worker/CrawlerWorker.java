@@ -53,24 +53,27 @@ public class CrawlerWorker implements Runnable {
 			// seed worker only works on seed MQ
 			// resource worker only works on resource MQ
 			String nextTargetUrl = MessageBroker.getOrCreateMessageQueueBroker(workerType).getMessage(threadIndex);
-			if (configuration.getCrawlerRecordHandler().isInHistory(nextTargetUrl)) {
+			if (configuration.getCrawlerRecordHandler().isInHistory(nextTargetUrl, workerType)) {
+				log.debug(Logging.format("Url({}) has been recorded from {} set before.", nextTargetUrl, workerType));
 				continue;
 			}
 
-			log.info(Logging.format("Worker thread {}: running crawler on next url: {}", threadIndex, nextTargetUrl));
+			log.info(Logging.format("Worker thread {} [{}]: running crawler on next url: {}", threadIndex, workerType,
+					nextTargetUrl));
 			try {
 				// https://www.ibm.com/developerworks/cn/java/j-lo-jsouphtml/index.html
 				Document doc = Jsoup.connect(nextTargetUrl).get();
 				String title = doc.title();
 
-				log.info(Logging.format("Working on worker thread {}: Title {}", threadIndex, title));
+				if (this.workerType == WorkerType.ResourceWorker) {
+					log.info(Logging.format("Working on worker thread {}: Title {}", threadIndex, title));
+				}
 				WebPage page = new WebPage();
 				page.setWebHead(doc.head());
 				page.setWebBody(doc.body());
 				page.setWebTitle(doc.title());
 				page.setWebUrl(nextTargetUrl);
 				parseWebPage(page);
-				configuration.getCrawlerRecordHandler().addToHistory(nextTargetUrl); // add to history
 
 				Thread.sleep(200);
 			} catch (Exception e) { // exit when encountering errors
@@ -89,21 +92,26 @@ public class CrawlerWorker implements Runnable {
 	private void parseWebPage(WebPage page) {
 		switch (workerType) {
 		case SeedWorker:
-			// check if we have url contained in the current page which needs to be added in
-			// to MQ. -> if yes, add to the MQ
+			// # Check if we have new URL contained in the current page which needs to be
+			// added
+			// in to MQ. -> if yes, add to the MQ
 			List<String> urlList = pageParser.getSeedUrlsList(page);
 			if (urlList == null || urlList.size() == 0) {
 				return;
 			}
 			for (String url : urlList) {
-				if (!configuration.getCrawlerRecordHandler().isInHistory(url)) { // only add new url
+				if (!configuration.getCrawlerRecordHandler().isInHistory(url, WorkerType.SeedWorker)) {
 					log.debug(Logging.format("Worker thread {}: sub url seed added {}", threadIndex, url));
 					// for each new seed url, add them to both seed worker MQ and resource worker MQ
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.SeedWorker).addMessage(url, threadIndex);
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.ResourceWorker).addMessage(url, threadIndex);
-					configuration.getCrawlerRecordHandler().addToHistory(url);
+				} else {
+					log.debug(Logging.format("{} has been recorded before.", url));
 				}
 			}
+
+			// # Add current URL to the seed history
+			configuration.getCrawlerRecordHandler().addToHistory(page.getWebUrl(), WorkerType.SeedWorker);
 			break;
 		case ResourceWorker:
 			// # Get text data from crawler
@@ -142,6 +150,9 @@ public class CrawlerWorker implements Runnable {
 					log.debug(Logging.format("# Worker thread {}: media - {}", threadIndex, mediaData.getName()));
 				}
 			}
+
+			// # Add current URL to the resource history:
+			configuration.getCrawlerRecordHandler().addToHistory(page.getWebUrl(), WorkerType.ResourceWorker);
 			break;
 		default:
 			log.error(Logging.format("worker type is not supported."));
@@ -231,7 +242,7 @@ public class CrawlerWorker implements Runnable {
 //			System.out.println("status code：" + con.getResponseCode());
 			return con;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error(Logging.format("Error happened when openning download connection, error: {}", e.getMessage()));
 		}
 		return null;
 	}

@@ -10,18 +10,19 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import lombok.extern.log4j.Log4j;
 import pers.perry.xu.crawler.framework.webcrawler.configuration.CrawlerConfiguration;
 import pers.perry.xu.crawler.framework.webcrawler.utils.Logging;
+import pers.perry.xu.crawler.framework.webcrawler.worker.WorkerType;
 
 @Log4j
 public class CrawlerRecord {
 
-//	private Set<String> historySet = null;
-	private ConcurrentSkipListSet<String> historySet;
+	private ConcurrentSkipListSet<String> historySeedsSet;
+	private ConcurrentSkipListSet<String> historyResourcesSet;
 
 	private CrawlerConfiguration configuration;
 
 	public CrawlerRecord(CrawlerConfiguration configuration) {
-		historySet = new ConcurrentSkipListSet<String>();
-//		historySet = Collections.synchronizedSet(new HashSet<String>());
+		historySeedsSet = new ConcurrentSkipListSet<String>();
+		historyResourcesSet = new ConcurrentSkipListSet<String>();
 
 		this.configuration = configuration;
 		this.loadRecordLogFile();
@@ -34,8 +35,17 @@ public class CrawlerRecord {
 	 * @param url the given URL to check
 	 * @return whether the URl has been handled
 	 */
-	public boolean isInHistory(String url) {
-		return historySet.contains(url);
+	public boolean isInHistory(String url, WorkerType workerType) {
+		switch (workerType) {
+		case SeedWorker:
+			return historySeedsSet.contains(url);
+		case ResourceWorker:
+			return historyResourcesSet.contains(url);
+		default:
+			log.error(Logging.format("{} is not supported.", workerType));
+			return false;
+		}
+
 	}
 
 	/**
@@ -43,8 +53,18 @@ public class CrawlerRecord {
 	 * 
 	 * @param url the URL to be marked
 	 */
-	public void addToHistory(String url) {
-		this.historySet.add(url);
+	public void addToHistory(String url, WorkerType workerType) {
+		switch (workerType) {
+		case SeedWorker:
+			this.historySeedsSet.add(url);
+			break;
+		case ResourceWorker:
+			this.historyResourcesSet.add(url);
+			break;
+		default:
+			log.error(Logging.format("{} is not supported.", workerType));
+			break;
+		}
 	}
 
 	/**
@@ -68,7 +88,7 @@ public class CrawlerRecord {
 //					}
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				log.error(Logging.format("Error happened when loading record log file, error: {}", e.getMessage()));
 			}
 		} else {
 			log.warn(Logging.format("wcp record log path does not exist, no records loaded."));
