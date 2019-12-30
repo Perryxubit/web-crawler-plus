@@ -17,7 +17,7 @@ public class MessageBroker {
 	private static HashMap<WorkerType, MessageBroker> messageBrokers = null;
 
 	// default message queue length = 100;
-	private final static int QUEUE_LENGTH = 100;
+	private final static int QUEUE_LENGTH = 2000;
 //	private final static int QUEUE_FULL_WAIT = 5000;
 	private final static int MESSAGE_PUSH_WAIT = 200;
 	private final static int MESSAGE_POP_WAIT = 10;
@@ -39,7 +39,8 @@ public class MessageBroker {
 	public boolean addMessage(String message, Integer threadNr) {
 		// blocking the calling thread if queue is full.
 		try {
-			if (queue.size() + 1 >= QUEUE_LENGTH) {
+			if (queue.size() + 1 > QUEUE_LENGTH) {
+				log.warn(Logging.format("Worker thread {}: Queue is full, gave up message: {}", threadNr, message));
 				return false; // add failed (queue is full)
 			}
 			queue.put(message);

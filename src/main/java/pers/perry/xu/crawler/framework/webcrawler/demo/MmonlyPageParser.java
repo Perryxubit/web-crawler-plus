@@ -12,25 +12,26 @@ public class MmonlyPageParser extends DemoPageParser {
 	@Override
 	public List<String> getSeedUrlsList(WebPage page) {
 		List<String> list = new ArrayList<String>();
-
 		// add other pages for the same topic
 		String contents = page.getWebBody().getElementsByClass("pages").get(0).toString();
-//		String basePicUrl = page.getWebUrl().substring(0, page.getWebUrl().lastIndexOf(".html"));
-		String basePicUrl2 = page.getWebUrl().substring(0, page.getWebUrl().lastIndexOf("/") + 1);
-		int pageNr = Integer.parseInt(getStringBetween(contents, "<a>共", "页: </a>"));
+		String basePicUrl = page.getWebUrl().substring(0, page.getWebUrl().lastIndexOf("/") + 1);
+//		int pageNr = Integer.parseInt(getStringBetween(contents, "<a>共", "页: </a>"));
 		List<String> subPageNr = getReguExpMatching(contents, "(?<=<a href=\")[0-9_]+.html(?=\">)");
-//		for (int i = 2; i <= pageNr && i >= 2; i++) {
-//			list.add(basePicUrl + "_" + i + ".html");
-//		}
 		for (String str : subPageNr) {
-			list.add(basePicUrl2 + str);
+			list.add(basePicUrl + str);
 		}
-
+		// add other topics
 		List<String> matchingList = new ArrayList<String>();
 		matchingList.add("http://www.mmonly.cc/mmtp/xgmn/[0-9]+.html");
 		List<String> res = getMatchingList(matchingList, page.getWebBody().toString());
 		list.addAll(res);
 		return list;
+	}
+
+	@Override
+	public String getText(WebPage page) {
+		// TODO: add text extraction in future in case we need it.
+		return null;
 	}
 
 	@Override
@@ -42,7 +43,6 @@ public class MmonlyPageParser extends DemoPageParser {
 		String pic = getStringBetween(content, "src=\"", "\"></a>");
 		String suffix = pic.substring(pic.lastIndexOf("/"), pic.lastIndexOf("."));
 		targetList.add(new WebMedia(alt + suffix, pic, MediaType.JPG));
-
 		return targetList;
 	}
 }

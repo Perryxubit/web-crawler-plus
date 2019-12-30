@@ -10,8 +10,8 @@ public class WebMedia extends WebResource {
 	protected String mediaUrl;
 	private MediaType mediaType;
 
-	public WebMedia(String name, String mediaUrl, MediaType type) {
-		super(name, null);
+	public WebMedia(String fileName, String mediaUrl, MediaType type) {
+		super(fileName, null);
 		this.mediaUrl = mediaUrl;
 		this.mediaType = type;
 	}

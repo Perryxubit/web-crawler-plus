@@ -58,10 +58,13 @@ public class CrawlerWorker implements Runnable {
 			// seed worker only works on seed MQ
 			// resource worker only works on resource MQ
 			String nextTargetUrl = MessageBroker.getOrCreateMessageQueueBroker(workerType).getMessage(threadIndex);
-			if (configuration.getCrawlerRecordHandler().isInHistory(nextTargetUrl, workerType)) {
-				log.debug(Logging.format("Url({}) has been recorded from {} set before.", nextTargetUrl, workerType));
-				continue;
-			}
+
+			// *** Remove following code which caused bug. And make sure no repeated msg are
+			// in history set is enough.
+//			if (configuration.getCrawlerRecordHandler().isInHistory(nextTargetUrl, workerType)) {
+//				log.debug(Logging.format("Url({}) has been recorded from {} set before.", nextTargetUrl, workerType));
+//				continue;
+//			}
 
 			log.info(Logging.format("Worker thread {} [{}]: running crawler on next url: {}", threadIndex, workerType,
 					nextTargetUrl));
@@ -106,10 +109,13 @@ public class CrawlerWorker implements Runnable {
 			}
 			for (String url : urlList) {
 				if (!configuration.getCrawlerRecordHandler().isInHistory(url, WorkerType.SeedWorker)) {
+					// if the msg has not beed added into history set.
 					log.debug(Logging.format("Worker thread {}: sub url seed added {}", threadIndex, url));
 					// for each new seed url, add them to both seed worker MQ and resource worker MQ
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.SeedWorker).addMessage(url, threadIndex);
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.ResourceWorker).addMessage(url, threadIndex);
+					// *** MAKE SURE there are only one msg can be added to the history set...
+					configuration.getCrawlerRecordHandler().addToHistory(url, WorkerType.SeedWorker);
 				} else {
 					log.debug(Logging.format("{} has been recorded before.", url));
 				}
@@ -207,18 +213,28 @@ public class CrawlerWorker implements Runnable {
 		// download pictures
 		case JPG:
 		case PNG:
-			String picUrl = webMediaData.getMediaUrl();
-			String picName = webMediaData.getName();
+		case GIF:
+		case BMP:
+		case MP3:
+		case MP4:
+		case FLV:
+			// Since all media file can share the same downloading function...
+			String fileUrl = webMediaData.getMediaUrl();
+			String fileName = webMediaData.getName();
 
 			try {
-				HttpURLConnection con = openConnectionToUrl(picUrl);
-				if (!picName.contains(".")) {
-					picName += "." + webMediaData.getMediaType().toString().toLowerCase();
+				HttpURLConnection con = openConnectionToUrl(fileUrl);
+				if (!fileName.contains(".")) {
+					fileName += "." + webMediaData.getMediaType().toString().toLowerCase();
 				}
-				picName = formatFileName(picName);
-				File savedFile = new File(configuration.getWcpOutputPath() + File.separator + picName + "");
+				fileName = formatFileName(fileName);
+				Path filePath = Paths.get(configuration.getWcpOutputPath() + File.separator + "file");
+				if (!Files.exists(filePath)) {
+					Files.createDirectories(filePath);
+				}
+				File savedFile = new File(filePath + File.separator + fileName + "");
 
-				log.info(Logging.format("# Saving {} file to ", webMediaData.getMediaType(), savedFile));
+				log.info(Logging.format("# Saving {} file to {}", webMediaData.getMediaType(), savedFile));
 				try (InputStream is = con.getInputStream(); OutputStream os = new FileOutputStream(savedFile)) {
 					byte[] bs = new byte[1024];
 					int len;
@@ -231,9 +247,6 @@ public class CrawlerWorker implements Runnable {
 				log.error(Logging.format("Error happened when exporting the media data, error: {}", e.getMessage()));
 			}
 			break;
-		case MP3:
-		case MP4:
-			// TODO: to be added
 		default:
 			log.info(Logging.format("Media type {} is not supported.", webMediaData.getMediaType()));
 			break;

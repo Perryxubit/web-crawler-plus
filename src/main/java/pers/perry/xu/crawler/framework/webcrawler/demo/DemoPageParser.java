@@ -15,44 +15,35 @@ public class DemoPageParser implements WebPageParser {
 	@Override
 	public List<String> getSeedUrlsList(WebPage page) {
 		List<String> list = new ArrayList<String>();
-//		list.add("http://www.mmonly.cc/mmtp/xgmn/[0-9]+.html");
-		list.add("http://www.mmonly.cc/ktmh/qbrw/[0-9]+.html");
-		return getMatchingList(list, page.getWebBody().toString());
+		// add other pages for the same topic
+		String contents = page.getWebBody().getElementsByClass("pages").get(0).toString();
+		String basePicUrl = page.getWebUrl().substring(0, page.getWebUrl().lastIndexOf("/") + 1);
+		List<String> subPageNr = getReguExpMatching(contents, "(?<=<a href=\")[0-9_]+.html(?=\">)");
+		for (String str : subPageNr) {
+			list.add(basePicUrl + str);
+		}
+		// add other topics
+		List<String> matchingList = new ArrayList<String>();
+		matchingList.add("http://www.mmonly.cc/ktmh/dmmn/[0-9]+.html");
+		List<String> res = getMatchingList(matchingList, page.getWebBody().toString());
+		list.addAll(res);
+		return list;
 	}
 
 	@Override
 	public String getText(WebPage page) {
-		// 匹配exp前面的位置 (?=exp)
-		// 匹配exp后面的位置 (?<=exp)
-//		return "(?<=<img alt=\")[\\u4e00-\\u9fa5]+(?=\"\\s+src)";
 		return null;
 	}
 
 	@Override
 	public List<WebMedia> getMediaDataList(WebPage page) {
-		// <img alt="小黄人大眼萌Q版人物萌图欣赏"
-		// src="http://t1.hxzdhn.com/uploads/tu/201602/198/ghszy4mkx5v.jpg">
 		List<WebMedia> targetList = new ArrayList<WebMedia>();
+		// add current pic
 		String content = page.getWebBody().getElementById("big-pic").toString();
-
-//		String pattern1 = "src=\"(.+?\\.jpg)\"";
-//		String pattern2 = "(?<=<img alt=\")[\\u4e00-\\u9fa5]+(?=\"\\s+src)";
-//		Pattern picPattern = Pattern.compile(pattern1);
-//		Matcher webMatcher = picPattern.matcher(content);
-//		while (webMatcher.find()) {
-//			String res = webMatcher.group();
-//			res = res.replace("src=", "").replace("\"", "");
-//			Pattern titlePattern = Pattern.compile(pattern2);
-//			Matcher titleMatcher = titlePattern.matcher(bodyElement.getElementById("big-pic").toString());
-//			while (titleMatcher.find()) {
-//				String alt = titleMatcher.group();
-//				targetList.add(new WebMedia(alt, res, MediaType.JPG));
-//			}
-//		}
-		String alt = getStringBetween(content, "<img alt=\"", "\" src=\"");
+		String alt = getStringBetween(content, "<img alt=\"", "\" src=");
 		String pic = getStringBetween(content, "src=\"", "\"></a>");
-		targetList.add(new WebMedia(alt, pic, MediaType.JPG));
-
+		String suffix = pic.substring(pic.lastIndexOf("/"), pic.lastIndexOf("."));
+		targetList.add(new WebMedia(alt + suffix, pic, MediaType.JPG));
 		return targetList;
 	}
 

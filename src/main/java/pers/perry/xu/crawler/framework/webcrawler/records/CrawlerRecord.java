@@ -1,6 +1,8 @@
 package pers.perry.xu.crawler.framework.webcrawler.records;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,12 +82,23 @@ public class CrawlerRecord {
 					Files.createFile(recordFilePath);
 				} else {
 					// load existing entries into historySet
-//					try (BufferedReader br = new BufferedReader(new FileReader(recordFilePath.toString()))) {
-//						String str = null;
-//						while ((str = br.readLine()) != null) {
-//							// …
-//						}
-//					}
+					try (BufferedReader br = new BufferedReader(new FileReader(recordFilePath.toString()))) {
+						String str = null;
+						while ((str = br.readLine()) != null) {
+							// entry example:
+							// 1##seedMQ##message1
+							// 2##resourceMQ##message2
+							String[] list = str.split("##");
+							if (list.length == 3) {
+								if (list[1].toLowerCase().startsWith("seed")) {
+									historySeedsSet.add(list[2]);
+								} else if (list[1].toLowerCase().startsWith("resource")) {
+									historyResourcesSet.add(list[2]);
+								}
+							}
+							str = br.readLine();
+						}
+					}
 				}
 			} catch (IOException e) {
 				log.error(Logging.format("Error happened when loading record log file, error: {}", e.getMessage()));
