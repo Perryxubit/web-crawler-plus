@@ -9,17 +9,10 @@ import pers.perry.xu.crawler.framework.webcrawler.controller.CrawlerController;
 /**
  * TODO:
  * 
- * 0. 2 record set for seed and resource ## done
- * 
  * 1. handled full MQ ## done (have to give up message?)
  * 
  * 2. multi-threads write to record file @?
  * 
- * 3. download text to file ## done
- * 
- * 4. read record file before start ## done
- * 
- * 5. download other media, mp3/mp4, etc. ## done
  */
 public class DemoMain {
 	public static void main(String[] args) {

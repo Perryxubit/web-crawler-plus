@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 import lombok.extern.log4j.Log4j;
 import pers.perry.xu.crawler.framework.webcrawler.configuration.CrawlerConfiguration;
+import pers.perry.xu.crawler.framework.webcrawler.records.async.AsyncFileIO4MultiThreads;
 import pers.perry.xu.crawler.framework.webcrawler.utils.Logging;
 import pers.perry.xu.crawler.framework.webcrawler.worker.WorkerType;
 
@@ -19,6 +20,7 @@ public class CrawlerRecord {
 
 	private ConcurrentSkipListSet<String> historySeedsSet;
 	private ConcurrentSkipListSet<String> historyResourcesSet;
+	private AsyncFileIO4MultiThreads asyncFilehandler;
 
 	private CrawlerConfiguration configuration;
 
@@ -28,6 +30,8 @@ public class CrawlerRecord {
 
 		this.configuration = configuration;
 		this.loadRecordLogFile();
+		this.asyncFilehandler = new AsyncFileIO4MultiThreads(configuration.getWcpLogPath().toString(),
+				configuration.getWcpLogRecordFile());
 	}
 
 	/**
@@ -59,9 +63,11 @@ public class CrawlerRecord {
 		switch (workerType) {
 		case SeedWorker:
 			this.historySeedsSet.add(url);
+			this.asyncFilehandler.writeToFileInAsync(workerType.toString());
 			break;
 		case ResourceWorker:
 			this.historyResourcesSet.add(url);
+			this.asyncFilehandler.writeToFileInAsync(workerType.toString());
 			break;
 		default:
 			log.error(Logging.format("{} is not supported.", workerType));
