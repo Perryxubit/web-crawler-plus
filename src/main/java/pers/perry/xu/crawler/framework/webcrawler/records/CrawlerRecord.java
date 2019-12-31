@@ -59,15 +59,21 @@ public class CrawlerRecord {
 	 * 
 	 * @param url the URL to be marked
 	 */
-	public void addToHistory(String url, WorkerType workerType) {
+	public void addToHistory(String url, WorkerType workerType, String threadId) {
 		switch (workerType) {
 		case SeedWorker:
-			this.historySeedsSet.add(url);
-			this.asyncFilehandler.writeToFileInAsync(workerType.toString());
+			if (!historySeedsSet.contains(url)) {
+				historySeedsSet.add(url);
+				// make sure no repeated entries written to file
+				asyncFilehandler.appendToFileWithBlockingAsync(workerType, threadId, url);
+			}
 			break;
 		case ResourceWorker:
-			this.historyResourcesSet.add(url);
-			this.asyncFilehandler.writeToFileInAsync(workerType.toString());
+			if (!historyResourcesSet.contains(url)) {
+				historyResourcesSet.add(url);
+				// make sure no repeated entries written to file
+				asyncFilehandler.appendToFileWithBlockingAsync(workerType, threadId, url);
+			}
 			break;
 		default:
 			log.error(Logging.format("{} is not supported.", workerType));
@@ -92,13 +98,13 @@ public class CrawlerRecord {
 						String str = null;
 						while ((str = br.readLine()) != null) {
 							// entry example:
-							// 1##seedMQ##message1
-							// 2##resourceMQ##message2
+							// SeedWorker##1##message1
+							// ResourceWorker##2##message2
 							String[] list = str.split("##");
 							if (list.length == 3) {
-								if (list[1].toLowerCase().startsWith("seed")) {
+								if (list[0].toLowerCase().startsWith("seed")) {
 									historySeedsSet.add(list[2]);
-								} else if (list[1].toLowerCase().startsWith("resource")) {
+								} else if (list[0].toLowerCase().startsWith("resource")) {
 									historyResourcesSet.add(list[2]);
 								}
 							}

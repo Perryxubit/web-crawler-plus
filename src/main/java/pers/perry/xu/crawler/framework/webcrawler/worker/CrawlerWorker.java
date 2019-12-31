@@ -115,14 +115,15 @@ public class CrawlerWorker implements Runnable {
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.SeedWorker).addMessage(url, threadIndex);
 					MessageBroker.getOrCreateMessageQueueBroker(WorkerType.ResourceWorker).addMessage(url, threadIndex);
 					// *** MAKE SURE there are only one msg can be added to the history set...
-					configuration.getCrawlerRecordHandler().addToHistory(url, WorkerType.SeedWorker);
+					configuration.getCrawlerRecordHandler().addToHistory(url, WorkerType.SeedWorker, threadIndex + "");
 				} else {
 					log.debug(Logging.format("{} has been recorded before.", url));
 				}
 			}
 
-			// # Add current URL to the seed history
-			configuration.getCrawlerRecordHandler().addToHistory(page.getWebUrl(), WorkerType.SeedWorker);
+			// # Also Add current URL to the seed history
+			configuration.getCrawlerRecordHandler().addToHistory(page.getWebUrl(), WorkerType.SeedWorker,
+					threadIndex + "");
 			break;
 		case ResourceWorker:
 			// # Get text data from crawler
@@ -163,7 +164,8 @@ public class CrawlerWorker implements Runnable {
 			}
 
 			// # Add current URL to the resource history:
-			configuration.getCrawlerRecordHandler().addToHistory(page.getWebUrl(), WorkerType.ResourceWorker);
+			configuration.getCrawlerRecordHandler().addToHistory(page.getWebUrl(), WorkerType.ResourceWorker,
+					threadIndex + "");
 			break;
 		default:
 			log.error(Logging.format("worker type is not supported."));

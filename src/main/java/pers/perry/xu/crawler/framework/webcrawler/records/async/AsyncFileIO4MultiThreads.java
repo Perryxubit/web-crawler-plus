@@ -1,16 +1,18 @@
 package pers.perry.xu.crawler.framework.webcrawler.records.async;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousFileChannel;
-import java.nio.channels.CompletionHandler;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
 import lombok.extern.log4j.Log4j;
 import pers.perry.xu.crawler.framework.webcrawler.utils.Logging;
+import pers.perry.xu.crawler.framework.webcrawler.utils.Utils;
+import pers.perry.xu.crawler.framework.webcrawler.worker.WorkerType;
 
 @Log4j
 public class AsyncFileIO4MultiThreads {
@@ -21,59 +23,55 @@ public class AsyncFileIO4MultiThreads {
 		this.filePath = Paths.get(filePath + File.separator + fileName);
 	}
 
-	public void writeToFileInAsync(String thread) {
-		try {
-//			readAsync(filePath, thread);
-			writeAsync(filePath, thread, "perry\n");
-		} catch (IOException e) {
-			log.error(Logging.format("Error happened when doing async write, error: {}", e.getMessage()));
+	public void appendToFileWithBlockingAsync(WorkerType workerType, String threadId, String msg) {
+		final String fileOutputPath = this.filePath.toString();
+		// log file examples:
+		// SeedWorker##1##message1
+		// ResourceWorker##2##message2
+		final String msgToAppened = workerType.toString() + "##" + threadId + "##" + msg;
+
+		// Async call without return value (if there wille be return value, please use
+		// supplyAsync() instead of runAsync())
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			// Append file here
+			try {
+				while (!tryToAppend(fileOutputPath, msgToAppened)) {
+					// blocking this thread while getting lock failed
+					Thread.sleep(Utils.LOCK_ACQUIRE_WAIT_TIME_MS);
+					log.trace(Logging.format("Worker thread {} [{}]: Lock contention when appending the file, wait...",
+							threadId, workerType.toString()));
+				}
+			} catch (InterruptedException | IOException e) {
+				log.error(Logging.format("Error happened when Writing to file asynchronously, due to: {}", e));
+			}
+		});
+
+		future.whenComplete(new BiConsumer<Void, Throwable>() {
+			@Override
+			public void accept(Void res, Throwable exc) {
+				if (exc != null) {
+					log.error(Logging.format(
+							"Worker thread {} [{}]: Write to file asynchronously is not successful, due to: {}",
+							threadId, workerType.toString(), exc));
+				} else {
+					log.debug(Logging.format("Worker thread {} [{}]:Write to file asynchronously is successful.",
+							threadId, workerType.toString()));
+				}
+			}
+		});
+	}
+
+	private boolean tryToAppend(String filePath, String content) throws IOException {
+		if (FileIOLockHandler.getLockerSuccessfully()) {
+			try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath, true))) {
+				bw.write(content);
+				bw.newLine();
+			} finally {
+				FileIOLockHandler.releaseLocker();
+			}
+			return true;
+		} else { // add failed due to occupied lock
+			return false;
 		}
-	}
-
-	private void readAsync(Path path, String threadInfo) throws IOException {
-		String uri = path.toString();
-		AsynchronousFileChannel channel = AsynchronousFileChannel.open(Paths.get(uri), StandardOpenOption.SYNC);
-		ByteBuffer buffer = ByteBuffer.allocate(1024);
-		channel.read(buffer, 0, buffer, new CompletionHandler<Integer, ByteBuffer>() {
-			@Override
-			public void completed(Integer result, ByteBuffer attachment) {
-				System.out.println("######result: " + result);
-				attachment.flip();
-				System.out.println(new String(attachment.array()));
-				attachment.clear();
-			}
-
-			@Override
-			public void failed(Throwable exc, ByteBuffer attachment) {
-				log.error(Logging.format("Error happened when doing async write, CompletionHandler failed"));
-				exc.printStackTrace();
-			}
-		});
-	}
-
-	private void writeAsync(Path path, String threadInfo, String message) throws IOException {
-		String uri = path.toString();
-
-		final AsynchronousFileChannel channel = AsynchronousFileChannel.open(Paths.get(uri), StandardOpenOption.WRITE);
-
-		byte[] byteArray = message.getBytes();
-		ByteBuffer buffer = ByteBuffer.wrap(byteArray);
-
-		channel.write(buffer, 0, null, new CompletionHandler<Integer, ByteBuffer>() {
-
-			@Override
-			public void completed(Integer result, ByteBuffer attachment) {
-				System.out.println("####Write done");
-			}
-
-			@Override
-			public void failed(Throwable exc, ByteBuffer attachment) {
-				log.error(Logging.format("Error happened when doing async write, CompletionHandler failed: {}",
-						exc.getMessage()));
-				exc.printStackTrace();
-			}
-
-		});
-
 	}
 }

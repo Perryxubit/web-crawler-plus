@@ -6,4 +6,5 @@ public class Utils {
 //		return "(" + type + " Thr " + threadNr + ") " + content;
 //	}
 
+	public final static int LOCK_ACQUIRE_WAIT_TIME_MS = 50;
 }
