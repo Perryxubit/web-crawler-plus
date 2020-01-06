@@ -4,7 +4,7 @@
 
   <groupId>pers.perry.xu.crawler.framework</groupId>
   <artifactId>web-crawler-plus</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.20200106</version>
   <packaging>jar</packaging>
 
   <name>web-crawler-plus</name>
