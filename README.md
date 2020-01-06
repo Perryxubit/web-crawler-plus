@@ -7,21 +7,23 @@ WCP uses asynchronously write to document all records which were crawled before.
   
 Demo is in the package pers.perry.xu.crawler.framework.webcrawler.demo
 
-# Quick start
+## Quick start
 ```
 # 1. implement the WebPageParser interface, e.g.
 public class YourPageParser implements WebPageParser {
     @Override
-	public List<String> getSeedUrlsList(WebPage page) {
-        //...
+	public List<String> getSeedUrlsList(WebPage webPage) {
+        // go through the webPage and returns the sub-seed Urls list.
     }
     @Override
-	public List<WebMedia> getMediaDataList(WebPage page) {
-        //...
+	public List<WebMedia> getMediaDataList(WebPage webPage) {
+        // go through the webPage and returns the media data (support: JPG/PNG/GIF/BMP/MP3/MP4/FLV) resoruce list from the page.
+        // return null if you don't want any media data
     }
     @Override
-	public String getText(WebPage page) {
-        //...
+	public String getText(WebPage webPage) {
+        // go through the webPage and returns the text content from the page.
+        // return null if you don't want any text
     }
 }
 
