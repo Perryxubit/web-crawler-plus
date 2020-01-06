@@ -39,7 +39,8 @@ CrawlerController controller = new CrawlerController(configuration);
 controller.startCrawler();
 
 ```
-
+PS: the default seed workers : resource workers = 1:4
+e.g. if there are only 
 ## Architecture Graph for WCP: 
 ![Architecture Graph for WCP](./src/resources/wcp_graph.jpg)
 
