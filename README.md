@@ -31,8 +31,9 @@ configuration.addSeed("https://abcdefg");
 configuration.addSeed("hhttps://hijklmn");
 ...
 configuration.setMaxThreadNumber(3); // 1 seed worker + 2 resource workers
-configuration.setWorkSpace("/Users/perry/Documents/testprogram/webcrawler/");
+configuration.setWorkSpace("/Users/perry/Documents/testprogram/webcrawler/"); // output or record files path
 configuration.setParser(new YourPageParser());
+configuration.setOutputMode(DataOutputMode.DownloadToFiles);
 
 # 3. start crawler
 CrawlerController controller = new CrawlerController(configuration);
@@ -40,7 +41,7 @@ controller.startCrawler();
 
 ```
 PS: the default seed workers : resource workers = 1:4
-e.g. if there are only 
+if less than 5 threads, then there will be only 1 seed worker.
 ## Architecture Graph for WCP: 
 ![Architecture Graph for WCP](./src/resources/wcp_graph.jpg)
 
