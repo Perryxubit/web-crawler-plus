@@ -111,6 +111,7 @@ public class CrawlerRecord {
 							str = br.readLine();
 						}
 					}
+					log.info("Load record file successfully.");
 				}
 			} catch (IOException e) {
 				log.error(Logging.format("Error happened when loading record log file, error: {}", e.getMessage()));

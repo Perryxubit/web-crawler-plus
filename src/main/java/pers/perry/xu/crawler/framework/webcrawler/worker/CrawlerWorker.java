@@ -117,7 +117,7 @@ public class CrawlerWorker implements Runnable {
 					// *** MAKE SURE there are only one msg can be added to the history set...
 					configuration.getCrawlerRecordHandler().addToHistory(url, WorkerType.SeedWorker, threadIndex + "");
 				} else {
-					log.debug(Logging.format("{} has been recorded before.", url));
+					log.info(Logging.format("Seed {} has been recorded before.", url));
 				}
 			}
 
@@ -126,6 +126,10 @@ public class CrawlerWorker implements Runnable {
 					threadIndex + "");
 			break;
 		case ResourceWorker:
+			if (configuration.getCrawlerRecordHandler().isInHistory(page.getWebUrl(), WorkerType.ResourceWorker)) {
+				log.info(Logging.format("Resource {} has been recorded before.", page.getWebUrl()));
+				return;
+			}
 			// # Get text data from crawler
 			String content = pageParser.getText(page);
 			if (!StringUtils.isEmpty(content)) {

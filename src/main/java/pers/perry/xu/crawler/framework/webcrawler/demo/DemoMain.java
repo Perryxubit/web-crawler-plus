@@ -25,8 +25,8 @@ public class DemoMain {
 //		configuration.addSeed("http://www.mmonly.cc/mmtp/xgmn/304890.html");
 		configuration.setOutputMode(DataOutputMode.DownloadToFiles);
 		configuration.setMaxThreadNumber(3);
-//		configuration.setWorkSpace("/Users/perry/Documents/testprogram/webcrawler/");
-		configuration.setWorkSpace("D:\\Development Testing & Script\\web-crawler-plus\\");
+		configuration.setWorkSpace("/Users/perry/Documents/testprogram/webcrawler/");
+//		configuration.setWorkSpace("D:\\Development Testing & Script\\web-crawler-plus\\");
 //		configuration.setParser(new DemoPageParser());
 		configuration.setParser(new TGBusPageParser());
 //		configuration.setParser(new MmonlyPageParser());
