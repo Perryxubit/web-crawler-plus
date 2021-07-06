@@ -27,6 +27,10 @@ public class CrawlerConfiguration {
 
 	@Setter
 	@Getter
+	private boolean enableCrawlingRecording = true;
+
+	@Setter
+	@Getter
 	private int threadCreateSleepTimeMS = 200;
 
 	@Setter
@@ -72,7 +76,7 @@ public class CrawlerConfiguration {
 	private CrawlerRecord crawlerRecordHandler;
 
 	public enum DataOutputMode {
-		PrintInConsole, DownloadToFiles
+		PrintInConsole, DownloadToFiles, DoNothing
 	}
 
 	@Setter

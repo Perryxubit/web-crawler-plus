@@ -21,14 +21,15 @@ public class CrawlerRecord {
 	private ConcurrentSkipListSet<String> historySeedsSet;
 	private ConcurrentSkipListSet<String> historyResourcesSet;
 	private AsyncFileIO4MultiThreads asyncFilehandler;
-
 	private CrawlerConfiguration configuration;
+	private boolean enableRecording;
 
 	public CrawlerRecord(CrawlerConfiguration configuration) {
 		historySeedsSet = new ConcurrentSkipListSet<String>();
 		historyResourcesSet = new ConcurrentSkipListSet<String>();
 
 		this.configuration = configuration;
+		this.enableRecording = this.configuration.isEnableCrawlingRecording();
 		this.loadRecordLogFile();
 		this.asyncFilehandler = new AsyncFileIO4MultiThreads(configuration.getWcpLogPath().toString(),
 				configuration.getWcpLogRecordFile());
@@ -42,6 +43,10 @@ public class CrawlerRecord {
 	 * @return whether the URl has been handled
 	 */
 	public boolean isInHistory(String url, WorkerType workerType) {
+		if(!this.enableRecording) { // always run crawler (not in history) if the recording is disabled.
+			return false;
+		}
+
 		switch (workerType) {
 		case SeedWorker:
 			return historySeedsSet.contains(url);
@@ -60,6 +65,10 @@ public class CrawlerRecord {
 	 * @param url the URL to be marked
 	 */
 	public void addToHistory(String url, WorkerType workerType, String threadId) {
+//		if(!this.enableRecording) { // do not add anything if recording is disabled.
+//			return;
+//		}
+
 		switch (workerType) {
 		case SeedWorker:
 			if (!historySeedsSet.contains(url)) {

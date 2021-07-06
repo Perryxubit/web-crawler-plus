@@ -7,4 +7,6 @@ public class Utils {
 //	}
 
 	public final static int LOCK_ACQUIRE_WAIT_TIME_MS = 50;
+
+	public final static int WAIT_TIME_MS_BETWEEN_CRAWLING = 1000;
 }

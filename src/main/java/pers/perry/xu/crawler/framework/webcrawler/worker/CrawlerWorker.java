@@ -25,6 +25,7 @@ import pers.perry.xu.crawler.framework.webcrawler.model.WebMedia;
 import pers.perry.xu.crawler.framework.webcrawler.model.WebPage;
 import pers.perry.xu.crawler.framework.webcrawler.parser.WebPageParser;
 import pers.perry.xu.crawler.framework.webcrawler.utils.Logging;
+import pers.perry.xu.crawler.framework.webcrawler.utils.Utils;
 
 @Log4j
 public class CrawlerWorker implements Runnable {
@@ -83,9 +84,10 @@ public class CrawlerWorker implements Runnable {
 				page.setWebUrl(nextTargetUrl);
 				parseWebPage(page);
 
-				Thread.sleep(200);
+				Thread.sleep(Utils.WAIT_TIME_MS_BETWEEN_CRAWLING);
 			} catch (Exception e) { // exit when encountering errors
 				log.error(Logging.format("Error happened when parsing webpage, error: {}", e.getMessage()));
+				e.printStackTrace();
 				break;
 			}
 			log.info(Logging.format("Worker thread {}: Crawling on url {} is done.", threadIndex, nextTargetUrl));
@@ -140,6 +142,8 @@ public class CrawlerWorker implements Runnable {
 				case DownloadToFiles:
 					downloadTextIntoWorkspace(page.getWebTitle() + ".txt", content);
 					break;
+				case DoNothing: // do nothing and skip output
+					break;
 				default:
 					printOutputInConsole("Text result:\n" + content);
 					break;
@@ -158,6 +162,8 @@ public class CrawlerWorker implements Runnable {
 						break;
 					case DownloadToFiles:
 						downloadMediaIntoWorkspace(mediaData);
+						break;
+					case DoNothing: // do nothing and skip output
 						break;
 					default:
 						printOutputInConsole("Picture Resource Url [" + mediaData.getMediaUrl() + "]");
@@ -179,7 +185,7 @@ public class CrawlerWorker implements Runnable {
 
 	/**
 	 * Print result in console.
-	 * 
+	 *
 	 * @param content the content to be displayed
 	 */
 	private void printOutputInConsole(String content) {
@@ -188,7 +194,7 @@ public class CrawlerWorker implements Runnable {
 
 	/**
 	 * Download the text into file.
-	 * 
+	 *
 	 * @param content the content to download
 	 */
 	private void downloadTextIntoWorkspace(String title, String content) {
@@ -211,7 +217,7 @@ public class CrawlerWorker implements Runnable {
 
 	/**
 	 * Download the media file (e.g. pictures, video, music, etc.) into file.
-	 * 
+	 *
 	 * @param webMediaData the media data to be downloaded
 	 */
 	private void downloadMediaIntoWorkspace(WebMedia webMediaData) {
@@ -261,7 +267,7 @@ public class CrawlerWorker implements Runnable {
 
 	/**
 	 * Open the connection to web resource and act like browser access.
-	 * 
+	 *
 	 * @param url the URL for downnloading connection
 	 * @return the ready http connection
 	 */
